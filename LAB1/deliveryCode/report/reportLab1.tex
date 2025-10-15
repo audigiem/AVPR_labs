@@ -1,0 +1,471 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{caption}
+
+\geometry{margin=1in}
+
+% Code listing style
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    frame=single,
+    breaklines=true,
+    captionpos=b
+}
+
+\title{\textbf{Artificial Vision and Pattern Recognition\\Laboratory Report\\Image Processing Techniques Analysis}}
+\author{Audigier Matteo}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\newpage
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+This report presents a comprehensive analysis of various image processing techniques implemented
+and evaluated as part of the Artificial Vision and Pattern Recognition laboratory work. 
+The primary objectives were to explore edge detection methods, custom convolution kernels, 
+noise addition and reduction strategies, motion blur simulation, and frequency domain filtering 
+using the Fourier Transform. \\
+
+\vspace{.5cm}
+
+The experiments were conducted using Python and OpenCV, 
+with results visualized through Matplotlib. The images used for testing were sourced from the 
+provided assets directory and from lab sessions of the previous year at my home university. \\
+
+\vspace{.5cm}
+
+The source code for all implementations is available in the GitHub repository:
+\url{https://github.com/audigiem/AVPR_labs}. Here are all the images used for the experiments:
+
+% show the 6 images used in the report
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{sourceImages.png}
+\end{figure}
+
+\newpage
+
+\section{Task 1: Edge Detection Comparison}
+
+\subsection{Theoretical Background}
+
+Edge detection is a crucial operation in image processing that identifies boundaries within images where brightness changes sharply. Three classical operators were implemented and compared:
+
+\subsubsection{Sobel Operator}
+The Sobel operator uses two 3×3 kernels to approximate derivatives in horizontal and vertical directions:
+
+\begin{equation}
+G_x = \begin{bmatrix} -1 & 0 & 1 \\ -2 & 0 & 2 \\ -1 & 0 & 1 \end{bmatrix}, \quad
+G_y = \begin{bmatrix} -1 & -2 & -1 \\ 0 & 0 & 0 \\ 1 & 2 & 1 \end{bmatrix}
+\end{equation}
+
+\subsubsection{Prewitt Operator}
+The Prewitt operator is similar to Sobel but with uniform weighting:
+
+\begin{equation}
+G_x = \begin{bmatrix} -1 & 0 & 1 \\ -1 & 0 & 1 \\ -1 & 0 & 1 \end{bmatrix}, \quad
+G_y = \begin{bmatrix} -1 & -1 & -1 \\ 0 & 0 & 0 \\ 1 & 1 & 1 \end{bmatrix}
+\end{equation}
+
+\subsubsection{Scharr Operator}
+The Scharr operator provides improved rotational symmetry:
+
+\begin{equation}
+G_x = \begin{bmatrix} -3 & 0 & 3 \\ -10 & 0 & 10 \\ -3 & 0 & 3 \end{bmatrix}, \quad
+G_y = \begin{bmatrix} -3 & -10 & -3 \\ 0 & 0 & 0 \\ 3 & 10 & 3 \end{bmatrix}
+\end{equation}
+
+The edge magnitude is computed as:
+\begin{equation}
+|G| = \sqrt{G_x^2 + G_y^2}
+\end{equation}
+
+\subsection{Implementation}
+
+The implementation process followed these steps:
+\begin{enumerate}
+    \item Load grayscale images from the assets directory
+    \item Apply each operator using OpenCV functions (cv2.Sobel, cv2.filter2D)
+    \item Compute magnitude by combining horizontal and vertical components
+    \item Normalize results for visualization
+    \item Generate comparative visualizations
+\end{enumerate}
+
+\subsection{Results and Analysis}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../results/part1/edge_detection_comparison_einstein.png}
+    \caption{Edge detection comparison on Einstein image showing original and results from Sobel, Prewitt, and Scharr operators}
+    \label{fig:edge_einstein}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../results/part1/detailed_edge_detection_comparison_mandrill256.png}
+    \caption{Detailed edge detection comparison on Mandrill image showing horizontal, vertical, and magnitude components}
+    \label{fig:edge_mandrill_detailed}
+\end{figure}
+
+\subsubsection{Comparative Analysis}
+
+The experimental results reveal several key observations:
+
+\begin{itemize}
+    \item \textbf{Sobel Operator:} Provides balanced edge detection with good noise suppression due to its smoothing effect. Most widely used in practice.
+    
+    \item \textbf{Prewitt Operator:} Similar to Sobel but with slightly less noise suppression. Simpler computation but comparable results.
+    
+    \item \textbf{Scharr Operator:} Produces the strongest edge responses with better angular accuracy, particularly effective for detecting diagonal edges. The higher kernel coefficients result in more pronounced edge detection.
+\end{itemize}
+
+For images with complex textures (like Mandrill), Scharr produces the most detailed edge maps. For smoother images (like Monroe), all three operators perform similarly, with Scharr showing slightly higher sensitivity.
+
+\section{Task 2: Custom Kernel Design and Application}
+
+\subsection{Theoretical Background}
+
+Convolution kernels are fundamental tools in image processing that enable various filtering operations. A kernel is a small matrix that slides over the image, computing weighted sums of pixel neighborhoods.
+
+\subsubsection{Kernel Definitions}
+
+Four custom kernels were designed and implemented:
+
+\begin{enumerate}
+    \item \textbf{Sharpening Kernel:}
+    \begin{equation}
+    K_{sharp} = \begin{bmatrix} 0 & -1 & 0 \\ -1 & 5 & -1 \\ 0 & -1 & 0 \end{bmatrix}
+    \end{equation}
+    Enhances edges and fine details by accentuating high-frequency components.
+    
+    \item \textbf{Edge Enhancement Kernel:}
+    \begin{equation}
+    K_{edge} = \begin{bmatrix} -1 & -1 & -1 \\ -1 & 8 & -1 \\ -1 & -1 & -1 \end{bmatrix}
+    \end{equation}
+    Detects and emphasizes edges in all directions.
+    
+    \item \textbf{Emboss Kernel:}
+    \begin{equation}
+    K_{emboss} = \begin{bmatrix} -2 & -1 & 0 \\ -1 & 1 & 1 \\ 0 & 1 & 2 \end{bmatrix}
+    \end{equation}
+    Creates a 3D relief effect by simulating directional lighting.
+    
+    \item \textbf{Custom Blur Kernel:}
+    \begin{equation}
+    K_{blur} = \frac{1}{16}\begin{bmatrix} 1 & 2 & 1 \\ 2 & 4 & 2 \\ 1 & 2 & 1 \end{bmatrix}
+    \end{equation}
+    Gaussian-like smoothing with normalized weights.
+\end{enumerate}
+
+\subsection{Implementation}
+
+The kernels were applied using cv2.filter2D() function, which performs 2D convolution:
+\begin{equation}
+I_{out}(x,y) = \sum_{i=-k}^{k}\sum_{j=-k}^{k} K(i,j) \cdot I_{in}(x+i, y+j)
+\end{equation}
+
+\subsection{Results and Analysis}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../results/part2/custom_kernels_monroe.png}
+    \caption{Custom kernel effects on Monroe image: original, sharpening, edge enhancement, emboss, and custom blur}
+    \label{fig:kernels_monroe}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../results/part2/custom_kernels_mandrill256.png}
+    \caption{Custom kernel effects on Mandrill image showing detailed texture responses}
+    \label{fig:kernels_mandrill}
+\end{figure}
+
+\subsubsection{Observations}
+
+\begin{itemize}
+    \item \textbf{Sharpening:} Successfully enhances details and makes edges crisper. Particularly effective on images with fine structures. May amplify noise in uniform regions.
+    
+    \item \textbf{Edge Enhancement:} Produces strong edge maps similar to Laplacian filtering. Highlights boundaries while suppressing constant regions. Useful for feature extraction.
+    
+    \item \textbf{Emboss:} Creates artistic 3D relief effects. The directional nature of the kernel produces illumination from top-left. Gray background represents zero gradient areas.
+    
+    \item \textbf{Custom Blur:} Provides smooth gradual blurring while preserving overall structure. The Gaussian-like distribution ensures no artifacts. Effective for noise reduction while maintaining edges better than box filters.
+\end{itemize}
+
+Kernel magnitude directly affects the strength of the effect. Increasing central weight in sharpening kernels produces more aggressive enhancement, while larger blur kernels increase smoothing radius.
+
+\section{Task 3: Noise Addition and Reduction Analysis}
+
+\subsection{Theoretical Background}
+
+Image noise degrades quality and can arise from various sources including sensor limitations, transmission errors, and environmental factors. This task focuses on salt-and-pepper noise, characterized by random white and black pixels.
+
+\subsubsection{Noise Reduction Filters}
+
+Four filtering techniques were evaluated:
+
+\begin{enumerate}
+    \item \textbf{Median Filter:} Replaces each pixel with the median value of its neighborhood. Highly effective for impulse noise while preserving edges.
+    
+    \item \textbf{Gaussian Filter:} Applies weighted averaging based on Gaussian distribution:
+    \begin{equation}
+    G(x,y) = \frac{1}{2\pi\sigma^2}e^{-\frac{x^2+y^2}{2\sigma^2}}
+    \end{equation}
+    
+    \item \textbf{Bilateral Filter:} Preserves edges by considering both spatial and intensity differences:
+    \begin{equation}
+    BF[I]_p = \frac{1}{W_p}\sum_{q\in S}G_{\sigma_s}(\|p-q\|)G_{\sigma_r}(|I_p-I_q|)I_q
+    \end{equation}
+    
+    \item \textbf{Non-Local Means (NLM):} Exploits patch similarity across the image for denoising.
+\end{enumerate}
+
+\subsubsection{Quality Metric}
+
+Peak Signal-to-Noise Ratio (PSNR) quantifies restoration quality:
+\begin{equation}
+PSNR = 10 \log_{10}\left(\frac{MAX_I^2}{MSE}\right)
+\end{equation}
+where $MAX_I$ is the maximum pixel value (255) and MSE is mean squared error.
+
+\subsection{Results and Analysis}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../results/part3/noise_analysis_100.png}
+    \caption{Noise reduction comparison at different noise levels (1\%, 5\%, 10\%) with PSNR values}
+    \label{fig:noise_analysis}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../results/part3/performance.png}
+    \caption{PSNR performance comparison across different noise levels and filtering methods}
+    \label{fig:noise_performance}
+\end{figure}
+
+\subsubsection{Analysis}
+
+\begin{itemize}
+    \item \textbf{Median Filter:} Consistently achieves the highest PSNR values for salt-and-pepper noise. Excellent at removing impulse noise while preserving edges. Performance degrades gracefully with increasing noise levels.
+    
+    \item \textbf{Gaussian Filter:} Shows poorest performance due to its averaging nature, which blurs both noise and edges. Not recommended for impulse noise but effective for Gaussian noise.
+    
+    \item \textbf{Bilateral Filter:} Provides good balance between noise reduction and edge preservation. Performs better than Gaussian but slightly worse than median for this noise type. Computationally more expensive.
+    
+    \item \textbf{Non-Local Means:} Competitive performance with good detail preservation. Particularly effective at moderate noise levels. Highest computational cost but produces visually pleasing results.
+\end{itemize}
+
+At 1\% noise, all filters perform adequately. At 10\% noise, median filtering clearly outperforms alternatives. For real-world applications, median filter is recommended for salt-and-pepper noise, while bilateral or NLM are better suited for Gaussian noise with edge preservation requirements.
+
+\section{Task 4: Motion Blur Simulation and Analysis}
+
+\subsection{Theoretical Background}
+
+Motion blur occurs when there is relative movement between the camera and scene during exposure. It can be mathematically modeled as convolution with a motion blur kernel representing the trajectory of movement.
+
+\subsubsection{Motion Blur Kernel}
+
+A motion blur kernel for angle $\theta$ and length $L$ is constructed by:
+\begin{enumerate}
+    \item Creating a line of non-zero values along the motion direction
+    \item Rotating the kernel to the desired angle
+    \item Normalizing to preserve image brightness
+\end{enumerate}
+
+The kernel effectively integrates along the motion path:
+\begin{equation}
+K_{motion}(x,y) = \begin{cases} 
+\frac{1}{L} & \text{if } (x,y) \text{ lies on motion path} \\
+0 & \text{otherwise}
+\end{cases}
+\end{equation}
+
+\subsection{Implementation}
+
+Motion blur kernels were generated for:
+\begin{itemize}
+    \item Four angles: 0°, 45°, 90°, 135°
+    \item Multiple kernel sizes: 15, 20, 30, 50 pixels
+    \item Diagonal combinations (horizontal + vertical)
+\end{itemize}
+
+\subsection{Results and Analysis}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../results/part4/motion_blur_angles_peppers.png}
+    \caption{Motion blur at different angles (0°, 45°, 90°, 135°) with corresponding kernels}
+    \label{fig:motion_angles}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../results/part4/motion_blur_sizes_peppers.png}
+    \caption{Effect of kernel size on motion blur intensity (size 15, 30, 50)}
+    \label{fig:motion_sizes}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{../results/part4/motion_blur_diagonal_peppers.png}
+    \caption{Diagonal motion blur created by combining horizontal and vertical kernels}
+    \label{fig:motion_diagonal}
+\end{figure}
+
+\subsubsection{Observations}
+
+\begin{itemize}
+    \item \textbf{Angle Dependency:} The blur direction clearly follows the kernel orientation. Horizontal blur (0°) streaks horizontally, vertical (90°) streaks vertically, and diagonal blurs show intermediate directions.
+    
+    \item \textbf{Size Effects:} Larger kernels produce more pronounced blur. At size 15, blur is subtle. At size 50, details are significantly smeared. Linear relationship between kernel size and perceived blur strength.
+    
+    \item \textbf{Diagonal Combination:} Combining orthogonal motions creates complex blur patterns. Sequential application differs from simultaneous diagonal blur, showing interesting interference effects.
+    
+    \item \textbf{Realistic Simulation:} The motion blur kernels effectively simulate camera shake and object motion. Useful for understanding blur formation mechanisms and testing deblurring algorithms.
+\end{itemize}
+
+Edge structures perpendicular to motion direction are most affected, while parallel edges remain relatively sharp. This anisotropic nature is characteristic of motion blur and distinguishes it from isotropic blurs like Gaussian.
+
+\section{Task 5: Frequency Domain Filtering with Fourier Transform}
+
+\subsection{Theoretical Background}
+
+Frequency domain analysis decomposes images into sinusoidal components of varying frequencies. The 2D Fourier Transform is defined as:
+
+\begin{equation}
+F(u,v) = \sum_{x=0}^{M-1}\sum_{y=0}^{N-1}f(x,y)e^{-j2\pi(\frac{ux}{M} + \frac{vy}{N})}
+\end{equation}
+
+The magnitude spectrum represents frequency content:
+\begin{equation}
+|F(u,v)| = \sqrt{\text{Re}(F(u,v))^2 + \text{Im}(F(u,v))^2}
+\end{equation}
+
+\subsubsection{Filtering in Frequency Domain}
+
+\begin{enumerate}
+    \item \textbf{Low-Pass Filter:} Removes high frequencies (noise, fine details), preserves low frequencies (overall structure). Implemented using circular mask:
+    \begin{equation}
+    H_{LP}(u,v) = \begin{cases} 
+    1 & \text{if } \sqrt{u^2+v^2} \leq D_0 \\
+    0 & \text{otherwise}
+    \end{cases}
+    \end{equation}
+    
+    \item \textbf{High-Pass Filter:} Removes low frequencies (background, illumination), preserves high frequencies (edges, textures):
+    \begin{equation}
+    H_{HP}(u,v) = 1 - H_{LP}(u,v)
+    \end{equation}
+\end{enumerate}
+
+\subsection{Implementation}
+
+The filtering process follows these steps:
+\begin{enumerate}
+    \item Compute 2D FFT: F = np.fft.fft2(image)
+    \item Shift zero frequency to center: F\_shift = np.fft.fftshift(F)
+    \item Apply filter mask: F\_filtered = F\_shift * H(u,v)
+    \item Inverse shift and transform: image\_filtered = np.fft.ifft2(np.fft.ifftshift(F\_filtered))
+\end{enumerate}
+
+\subsection{Results and Analysis}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../results/part5/frequency_analysis_100.png}
+    \caption{Frequency domain analysis showing original image, magnitude spectrum, and low/high-pass filtering results}
+    \label{fig:freq_analysis}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../results/part5/frequency_cutoff_comparison_100.png}
+    \caption{Effect of different cutoff frequencies (30, 60, 100 pixels) on low-pass filtering}
+    \label{fig:freq_cutoff}
+\end{figure}
+
+\subsubsection{Magnitude Spectrum Analysis}
+
+The magnitude spectrum reveals:
+\begin{itemize}
+    \item Bright center contains low-frequency components (overall structure)
+    \item Surrounding regions contain high-frequency components (details, edges)
+    \item Radial symmetry indicates isotropic frequency distribution
+    \item Diagonal lines indicate directional patterns in the image
+\end{itemize}
+
+\subsubsection{Low-Pass Filtering}
+
+\begin{itemize}
+    \item \textbf{Cutoff = 30:} Severe blurring, only coarse structure preserved. Effectively removes all fine details and textures.
+    
+    \item \textbf{Cutoff = 60:} Moderate blurring, balanced smoothing. Good for noise reduction while maintaining recognizability.
+    
+    \item \textbf{Cutoff = 100:} Subtle smoothing, most details retained. Useful for mild noise suppression.
+\end{itemize}
+
+Relationship: Smaller cutoff radius → more frequencies removed → stronger blur effect
+
+\subsubsection{High-Pass Filtering}
+
+High-pass filtering produces edge-enhanced images:
+\begin{itemize}
+    \item Removes constant and slowly varying components (illumination, background)
+    \item Emphasizes rapid intensity changes (edges, fine textures)
+    \item Results in darker overall image with highlighted boundaries
+    \item Useful for edge detection and feature extraction
+\end{itemize}
+
+\subsubsection{Advantages of Frequency Domain}
+
+\begin{itemize}
+    \item Intuitive understanding of filter effects through frequency response
+    \item Efficient implementation of large kernel convolutions using FFT
+    \item Precise control over frequency band selection
+    \item Theoretical foundation for filter design
+\end{itemize}
+
+However, spatial domain methods like bilateral filtering cannot be easily implemented in frequency domain due to their non-linear, content-dependent nature.
+
+\section{Conclusion}
+
+This laboratory work provided comprehensive hands-on experience with fundamental image processing techniques. The following key insights were gained:
+
+\subsection{Summary of Findings}
+
+\begin{enumerate}
+    \item \textbf{Edge Detection:} Scharr operator provides superior edge detection accuracy, particularly for diagonal edges, while Sobel offers the best balance between performance and noise immunity.
+    
+    \item \textbf{Custom Kernels:} Convolution kernels enable diverse image effects. Kernel design directly influences output characteristics, with center-weighted kernels for sharpening and uniform kernels for smoothing.
+    
+    \item \textbf{Noise Reduction:} Median filtering excels at removing salt-and-pepper noise with PSNR improvements of 8-12 dB. Filter selection must match noise characteristics for optimal performance.
+    
+    \item \textbf{Motion Blur:} Directional blur kernels accurately simulate camera motion. Kernel size and angle provide precise control over blur characteristics.
+    
+    \item \textbf{Frequency Domain:} Fourier analysis enables intuitive frequency-based filtering. Low-pass filters smooth images while high-pass filters emphasize edges, with cutoff frequency determining filter strength.
+\end{enumerate}
+
+\end{document}
