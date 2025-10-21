@@ -34,8 +34,9 @@ def harris_corner_detection(
     return corner_image
 
 
-
-def test_harris_with_various_parameters(image_path: str, target_size=(512, 512), figure_size=(16, 12)):
+def test_harris_with_various_parameters(
+    image_path: str, target_size=(512, 512), figure_size=(16, 12)
+):
     """
     Test Harris Corner Detection with various parameters and display results
     """
@@ -44,7 +45,7 @@ def test_harris_with_various_parameters(image_path: str, target_size=(512, 512),
         (2, 5, 0.04, 0.01),
         (4, 3, 0.04, 0.01),
         (2, 3, 0.06, 0.01),
-        (2, 3, 0.04, 0.02)
+        (2, 3, 0.04, 0.02),
     ]
     corners_with_params = {}
 
@@ -60,13 +61,15 @@ def test_harris_with_various_parameters(image_path: str, target_size=(512, 512),
 
     # set a consistent aspect ratio for all subplots
     for ax in axes.flatten():
-        ax.set_aspect('equal', adjustable='box')
+        ax.set_aspect("equal", adjustable="box")
 
     axes[0, 0].imshow(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB))
     axes[0, 0].set_title("Original Image")
     axes[0, 0].axis("off")
 
-    for ax, (params, corner_img) in zip(axes.flatten()[1:], corners_with_params.items()):
+    for ax, (params, corner_img) in zip(
+        axes.flatten()[1:], corners_with_params.items()
+    ):
         block_size, ksize, k, threshold = params
         ax.imshow(cv2.cvtColor(corner_img, cv2.COLOR_BGR2RGB))
         ax.set_title(f"b:{block_size}, ksize:{ksize}, k:{k}, th:{threshold}")
@@ -75,7 +78,6 @@ def test_harris_with_various_parameters(image_path: str, target_size=(512, 512),
     plt.show()
 
     fig.savefig("../outputs/cornerDetection/harris_parameter_variation.png")
-
 
 
 if __name__ == "__main__":
