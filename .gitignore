@@ -10,6 +10,13 @@
 *.fdb_latexmk
 *.synctex.gz
 
-*__pycache__/
-LAB1/deliveryCode/results/
-LAB1/ExampleCode/
+*__pycache__
+*/ExampleCode/
+*/Examples_Code/
+
+*/results/
+*/outputs/
+
+*.png
+*.jpg
+.idea

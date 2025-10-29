@@ -1,61 +1,14 @@
+"""
+Task 1: Edge Detection
+This script performs edge detection using multiple filters (Sobel, Prewitt, and Scharr)
+and compares their results.
+"""
+
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy import ndimage
 import os
-
-from networkx.algorithms.swap import directed_edge_swap
-
-
-def apply_sobel_edge_detection(image):
-    """Apply Sobel edge detection operator"""
-    # Sobel kernels
-    sobel_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], dtype=np.float32)
-    sobel_y = np.array([[1, 2, 1], [0, 0, 0], [-1, -2, -1]], dtype=np.float32)
-
-    # Apply convolution
-    grad_x = cv2.filter2D(image, cv2.CV_64F, sobel_x)
-    grad_y = cv2.filter2D(image, cv2.CV_64F, sobel_y)
-
-    # Compute magnitude
-    magnitude = np.sqrt(grad_x**2 + grad_y**2)
-    magnitude = np.uint8(np.clip(magnitude, 0, 255))
-
-    return magnitude, grad_x, grad_y
-
-
-def apply_prewitt_edge_detection(image):
-    """Apply Prewitt edge detection operator"""
-    # Prewitt kernels
-    prewitt_x = np.array([[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]], dtype=np.float32)
-    prewitt_y = np.array([[-1, -1, -1], [0, 0, 0], [1, 1, 1]], dtype=np.float32)
-
-    # Apply convolution
-    grad_x = cv2.filter2D(image, cv2.CV_64F, prewitt_x)
-    grad_y = cv2.filter2D(image, cv2.CV_64F, prewitt_y)
-
-    # Compute magnitude
-    magnitude = np.sqrt(grad_x**2 + grad_y**2)
-    magnitude = np.uint8(np.clip(magnitude, 0, 255))
-
-    return magnitude, grad_x, grad_y
-
-
-def apply_scharr_edge_detection(image):
-    """Apply Scharr edge detection operator"""
-    # Scharr operator
-    scharr_x = np.array([[-3, 0, 3], [-10, 0, 10], [-3, 0, 3]], dtype=np.float32)
-    scharr_y = np.array([[3, 10, 3], [0, 0, 0], [-3, -10, -3]], dtype=np.float32)
-
-    # Apply convolution
-    scharr_x = cv2.filter2D(image, cv2.CV_64F, scharr_x)
-    scharr_y = cv2.filter2D(image, cv2.CV_64F, scharr_y)
-
-    # Compute magnitude
-    magnitude = np.sqrt(scharr_x**2 + scharr_y**2)
-    magnitude = np.uint8(np.clip(magnitude, 0, 255))
-
-    return magnitude, scharr_x, scharr_y
-
 
 def load_and_preprocess_image(image_path=None, target_size=(512, 512)):
     """Load and preprocess image with consistent sizing"""
@@ -111,140 +64,115 @@ def load_and_preprocess_image(image_path=None, target_size=(512, 512)):
 
     return image
 
+def apply_sobel_filter(image):
+    """Apply Sobel filter for edge detection."""
+    # Sobel in X direction
+    sobel_x = cv2.Sobel(image, cv2.CV_64F, 1, 0, ksize=3)
+    # Sobel in Y direction
+    sobel_y = cv2.Sobel(image, cv2.CV_64F, 0, 1, ksize=3)
+    # Combine both directions
+    sobel_combined = np.sqrt(sobel_x**2 + sobel_y**2)
+    # Normalize to 0-255 range
+    sobel_combined = np.uint8(sobel_combined / sobel_combined.max() * 255)
+    return sobel_combined, sobel_x, sobel_y
 
-def compare_edge_detectors(
-    image_path=None, target_size=(512, 512), figure_size=(16, 8)
-):
-    """Main function to compare edge detection operators with consistent sizing"""
 
-    # Load image with consistent size
-    original_image = load_and_preprocess_image(image_path, target_size)
+def apply_prewitt_filter(image):
+    """Apply Prewitt filter for edge detection."""
+    # Prewitt kernels
+    kernel_x = np.array([[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]])
+    kernel_y = np.array([[-1, -1, -1], [0, 0, 0], [1, 1, 1]])
 
-    # Apply different edge detection operators
-    sobel_mag, sobel_x, sobel_y = apply_sobel_edge_detection(original_image)
-    prewitt_mag, prewitt_x, prewitt_y = apply_prewitt_edge_detection(original_image)
-    scharr_mag, scharr_x, scharr_y = apply_scharr_edge_detection(original_image)
+    # Apply convolution
+    prewitt_x = ndimage.convolve(image.astype(float), kernel_x)
+    prewitt_y = ndimage.convolve(image.astype(float), kernel_y)
 
-    # Create visualization with fixed figure size
-    fig, axes = plt.subplots(2, 4, figsize=figure_size)
+    # Combine both directions
+    prewitt_combined = np.sqrt(prewitt_x**2 + prewitt_y**2)
+    # Normalize to 0-255 range
+    prewitt_combined = np.uint8(prewitt_combined / prewitt_combined.max() * 255)
+    return prewitt_combined, prewitt_x, prewitt_y
 
-    # Set consistent aspect ratio for all subplots
-    for ax in axes[0]:
-        ax.set_aspect("equal")
 
-    # First row: Original and magnitude results
-    axes[0, 0].imshow(original_image, cmap="gray")
+def apply_scharr_filter(image):
+    """Apply Scharr filter for edge detection."""
+    # Scharr in X direction
+    scharr_x = cv2.Scharr(image, cv2.CV_64F, 1, 0)
+    # Scharr in Y direction
+    scharr_y = cv2.Scharr(image, cv2.CV_64F, 0, 1)
+    # Combine both directions
+    scharr_combined = np.sqrt(scharr_x**2 + scharr_y**2)
+    # Normalize to 0-255 range
+    scharr_combined = np.uint8(scharr_combined / scharr_combined.max() * 255)
+    return scharr_combined, scharr_x, scharr_y
+
+
+def display_edge_detection_results(original, sobel, prewitt, scharr):
+    """Display all edge detection results for comparison."""
+    fig, axes = plt.subplots(2, 4, figsize=(16, 8))
+    fig.suptitle("Edge Detection Comparison", fontsize=16, fontweight="bold")
+
+    # Original image
+    axes[0, 0].imshow(original, cmap="gray")
     axes[0, 0].set_title("Original Image")
     axes[0, 0].axis("off")
 
-    axes[0, 1].imshow(sobel_mag, cmap="gray")
-    axes[0, 1].set_title("Sobel Edge Detection")
+    # Sobel results
+    axes[0, 1].imshow(sobel, cmap="gray")
+    axes[0, 1].set_title("Sobel Filter")
     axes[0, 1].axis("off")
 
-    axes[0, 2].imshow(prewitt_mag, cmap="gray")
-    axes[0, 2].set_title("Prewitt Edge Detection")
+    # Prewitt results
+    axes[0, 2].imshow(prewitt, cmap="gray")
+    axes[0, 2].set_title("Prewitt Filter")
     axes[0, 2].axis("off")
 
-    axes[0, 3].imshow(scharr_mag, cmap="gray")
-    axes[0, 3].set_title("Scharr Edge Detection")
+    # Scharr results
+    axes[0, 3].imshow(scharr, cmap="gray")
+    axes[0, 3].set_title("Scharr Filter")
     axes[0, 3].axis("off")
 
-    # Second row: Comparison metrics
-    # Calculate edge strength statistics
-    sobel_mean = np.mean(sobel_mag)
-    prewitt_mean = np.mean(prewitt_mag)
-    scharr_mean = np.mean(scharr_mag)
+    # Side by side comparisons
+    axes[1, 0].imshow(original, cmap="gray")
+    axes[1, 0].set_title("Original")
+    axes[1, 0].axis("off")
 
-    sobel_std = np.std(sobel_mag)
-    prewitt_std = np.std(prewitt_mag)
-    scharr_std = np.std(scharr_mag)
+    axes[1, 1].imshow(sobel, cmap="gray")
+    axes[1, 1].set_title("Sobel Edges")
+    axes[1, 1].axis("off")
 
-    # Plot histograms
-    axes[1, 0].hist(original_image.flatten(), bins=50, alpha=0.7, color="gray")
-    axes[1, 0].set_title("Original Histogram")
-    axes[1, 0].set_xlabel("Pixel Intensity")
-    axes[1, 0].set_ylabel("Frequency")
+    axes[1, 2].imshow(prewitt, cmap="gray")
+    axes[1, 2].set_title("Prewitt Edges")
+    axes[1, 2].axis("off")
 
-    axes[1, 1].hist(sobel_mag.flatten(), bins=50, alpha=0.7, color="blue")
-    axes[1, 1].set_title(f"Sobel\nMean: {sobel_mean:.1f}, Std: {sobel_std:.1f}")
-    axes[1, 1].set_xlabel("Edge Magnitude")
-    axes[1, 1].set_ylabel("Frequency")
-
-    axes[1, 2].hist(prewitt_mag.flatten(), bins=50, alpha=0.7, color="green")
-    axes[1, 2].set_title(f"Prewitt\nMean: {prewitt_mean:.1f}, Std: {prewitt_std:.1f}")
-    axes[1, 2].set_xlabel("Edge Magnitude")
-    axes[1, 2].set_ylabel("Frequency")
-
-    axes[1, 3].hist(scharr_mag.flatten(), bins=50, alpha=0.7, color="red")
-    axes[1, 3].set_title(f"Scharr\nMean: {scharr_mean:.1f}, Std: {scharr_std:.1f}")
-    axes[1, 3].set_xlabel("Edge Magnitude")
-    axes[1, 3].set_ylabel("Frequency")
+    axes[1, 3].imshow(scharr, cmap="gray")
+    axes[1, 3].set_title("Scharr Edges")
+    axes[1, 3].axis("off")
 
     plt.tight_layout()
-    # plt.show()
-
-    # Save with consistent naming
-    if image_path is not None:
-        base_name = os.path.basename(image_path)
-        name, _ = os.path.splitext(base_name)
-        # move to outputs/edgeDetection/
-        dir_path = "../outputs/edgeDetection/"
-        fig.savefig(
-            f"{dir_path}edge_detection_comparison_{name}.png",
-            dpi=150,
-            bbox_inches="tight",
-        )
-    else:
-        fig.savefig("edge_detection_comparison.png", dpi=150, bbox_inches="tight")
-
-    # Print comparison analysis
-    print("Edge Detection Comparison Analysis:")
-    print("=" * 50)
-    print(f"Image size: {original_image.shape}")
-    print(
-        f"Sobel operator  - Mean edge strength: {sobel_mean:.2f}, Std: {sobel_std:.2f}"
+    plt.savefig(
+        "../outputs/edgeDetection/edge_detection_comparison.png",
+        dpi=150,
+        bbox_inches="tight",
     )
-    print(
-        f"Prewitt operator - Mean edge strength: {prewitt_mean:.2f}, Std: {prewitt_std:.2f}"
-    )
-    print(
-        f"Scharr operator  - Mean edge strength: {scharr_mean:.2f}, Std: {scharr_std:.2f}"
+    plt.show()
+
+
+def display_directional_edges(
+    original, sobel_x, sobel_y, prewitt_x, prewitt_y, scharr_x, scharr_y
+):
+    """Display directional edge detection results."""
+    fig, axes = plt.subplots(3, 3, figsize=(15, 15))
+    fig.suptitle(
+        "Directional Edge Detection Comparison", fontsize=16, fontweight="bold"
     )
 
-    return {
-        "original": original_image,
-        "sobel": sobel_mag,
-        "prewitt": prewitt_mag,
-        "scharr": scharr_mag,
-        "statistics": {
-            "sobel": {"mean": sobel_mean, "std": sobel_std},
-            "prewitt": {"mean": prewitt_mean, "std": prewitt_std},
-            "scharr": {"mean": scharr_mean, "std": scharr_std},
-        },
-    }
-
-
-def detailed_comparison(image_path=None, target_size=(512, 512), figure_size=(16, 12)):
-    """Detailed comparison showing horizontal and vertical components with consistent sizing"""
-    original_image = load_and_preprocess_image(image_path, target_size)
-
-    # Apply edge detection
-    sobel_mag, sobel_x, sobel_y = apply_sobel_edge_detection(original_image)
-    prewitt_mag, prewitt_x, prewitt_y = apply_prewitt_edge_detection(original_image)
-    scharr_mag, scharr_x, scharr_y = apply_scharr_edge_detection(original_image)
-
-    # Create detailed visualization with fixed figure size
-    fig, axes = plt.subplots(3, 4, figsize=figure_size)
-
-    # Set consistent aspect ratio for all subplots
-    for ax in axes.flat:
-        ax.set_aspect("equal")
-
-    # Sobel row
-    axes[0, 0].imshow(original_image, cmap="gray")
+    # Original
+    axes[0, 0].imshow(original, cmap="gray")
     axes[0, 0].set_title("Original Image")
     axes[0, 0].axis("off")
 
+    # Sobel directional
     axes[0, 1].imshow(np.abs(sobel_x), cmap="gray")
     axes[0, 1].set_title("Sobel X (Vertical Edges)")
     axes[0, 1].axis("off")
@@ -253,12 +181,8 @@ def detailed_comparison(image_path=None, target_size=(512, 512), figure_size=(16
     axes[0, 2].set_title("Sobel Y (Horizontal Edges)")
     axes[0, 2].axis("off")
 
-    axes[0, 3].imshow(sobel_mag, cmap="gray")
-    axes[0, 3].set_title("Sobel Magnitude")
-    axes[0, 3].axis("off")
-
-    # Prewitt row
-    axes[1, 0].imshow(original_image, cmap="gray")
+    # Prewitt directional
+    axes[1, 0].imshow(original, cmap="gray")
     axes[1, 0].set_title("Original Image")
     axes[1, 0].axis("off")
 
@@ -270,12 +194,8 @@ def detailed_comparison(image_path=None, target_size=(512, 512), figure_size=(16
     axes[1, 2].set_title("Prewitt Y (Horizontal Edges)")
     axes[1, 2].axis("off")
 
-    axes[1, 3].imshow(prewitt_mag, cmap="gray")
-    axes[1, 3].set_title("Prewitt Magnitude")
-    axes[1, 3].axis("off")
-
-    # Scharr row
-    axes[2, 0].imshow(original_image, cmap="gray")
+    # Scharr directional
+    axes[2, 0].imshow(original, cmap="gray")
     axes[2, 0].set_title("Original Image")
     axes[2, 0].axis("off")
 
@@ -287,60 +207,93 @@ def detailed_comparison(image_path=None, target_size=(512, 512), figure_size=(16
     axes[2, 2].set_title("Scharr Y (Horizontal Edges)")
     axes[2, 2].axis("off")
 
-    axes[2, 3].imshow(scharr_mag, cmap="gray")
-    axes[2, 3].set_title("Scharr Magnitude")
-    axes[2, 3].axis("off")
-
     plt.tight_layout()
-    # plt.show()
+    plt.savefig(
+        "../outputs/edgeDetection/directional_edges_comparison.png",
+        dpi=150,
+        bbox_inches="tight",
+    )
+    plt.show()
 
-    # Save with consistent naming
-    if image_path is not None:
-        base_name = os.path.basename(image_path)
-        name, _ = os.path.splitext(base_name)
-        # move to outputs/edgeDetection/
-        dir_path = "../outputs/edgeDetection/"
 
-        fig.savefig(
-            f"{dir_path}detailed_edge_detection_comparison_{name}.png",
-            dpi=150,
-            bbox_inches="tight",
-        )
-    else:
-        fig.savefig(
-            "detailed_edge_detection_comparison.png", dpi=150, bbox_inches="tight"
-        )
+def compare_filters_analysis(sobel, prewitt, scharr):
+    """Print analysis comparing the three filters."""
+    print("\n" + "=" * 70)
+    print("EDGE DETECTION FILTER COMPARISON ANALYSIS")
+    print("=" * 70)
+
+    print("\n1. SOBEL FILTER:")
+    print("   - Uses 3x3 kernels with weights that approximate derivatives")
+    print("   - Good balance between noise suppression and edge detection")
+    print("   - Most commonly used filter")
+    print(f"   - Detected edge intensity range: {sobel.min()} - {sobel.max()}")
+    print(f"   - Mean edge intensity: {sobel.mean():.2f}")
+
+    print("\n2. PREWITT FILTER:")
+    print("   - Similar to Sobel but with simpler kernels (uniform weights)")
+    print("   - Slightly more sensitive to noise than Sobel")
+    print("   - Faster computation due to simpler convolution")
+    print(f"   - Detected edge intensity range: {prewitt.min()} - {prewitt.max()}")
+    print(f"   - Mean edge intensity: {prewitt.mean():.2f}")
+
+    print("\n3. SCHARR FILTER:")
+    print("   - Uses optimized 3x3 kernels for better rotational symmetry")
+    print("   - More accurate for edge orientation detection")
+    print("   - Better at detecting small-scale edges")
+    print(f"   - Detected edge intensity range: {scharr.min()} - {scharr.max()}")
+    print(f"   - Mean edge intensity: {scharr.mean():.2f}")
+
+    print("\n4. KEY DIFFERENCES:")
+    print("   - Sensitivity: Scharr > Sobel > Prewitt")
+    print("   - Noise resistance: Sobel > Prewitt > Scharr")
+    print("   - Computational cost: Prewitt < Sobel ≈ Scharr")
+    print("   - Edge localization: Scharr > Sobel > Prewitt")
+
+    print("\n" + "=" * 70 + "\n")
+
+
+def main():
+    """Main function to execute edge detection tasks."""
+    # Load image
+    image_path = "../assets/image1.jpg"
+    print(f"Loading image from: {image_path}")
+    original_image = load_and_preprocess_image(image_path)
+    print(f"Image loaded successfully. Shape: {original_image.shape}")
+
+    # Apply Sobel filter
+    print("\nApplying Sobel filter...")
+    sobel_edges, sobel_x, sobel_y = apply_sobel_filter(original_image)
+    print("Sobel filter applied successfully.")
+
+    # Apply Prewitt filter
+    print("\nApplying Prewitt filter...")
+    prewitt_edges, prewitt_x, prewitt_y = apply_prewitt_filter(original_image)
+    print("Prewitt filter applied successfully.")
+
+    # Apply Scharr filter
+    print("\nApplying Scharr filter...")
+    scharr_edges, scharr_x, scharr_y = apply_scharr_filter(original_image)
+    print("Scharr filter applied successfully.")
+
+    # Display results
+    print("\nDisplaying edge detection results...")
+    display_edge_detection_results(
+        original_image, sobel_edges, prewitt_edges, scharr_edges
+    )
+
+    print("\nDisplaying directional edge detection results...")
+    display_directional_edges(
+        original_image, sobel_x, sobel_y, prewitt_x, prewitt_y, scharr_x, scharr_y
+    )
+
+    # Print comparison analysis
+    compare_filters_analysis(sobel_edges, prewitt_edges, scharr_edges)
+
+    print("Task 1 completed successfully!")
+    print("Output images saved:")
+    print("  - edge_detection_comparison.png")
+    print("  - directional_edges_comparison.png")
 
 
 if __name__ == "__main__":
-    # Configuration
-    TARGET_SIZE = (512, 512)
-    FIGURE_SIZE_BASIC = (16, 8)
-    FIGURE_SIZE_DETAILED = (16, 12)
-
-    # Run basic comparison
-    IMAGES_PATH = [
-        # "../assets/100.pgm",
-        "../assets/couchersoleil.pgm",
-        "../assets/einstein.pgm",
-        "../assets/monroe.pgm",
-        "../assets/image1.jpg",
-        "../assets/image2.jpg",
-        "../assets/left_image.png",
-    ]
-
-    for image_path in IMAGES_PATH:
-        print(f"\n{'='*60}")
-        print(f"Processing: {image_path}")
-        print(f"{'='*60}")
-
-        try:
-            print(f"Running basic edge detection comparison...")
-            results = compare_edge_detectors(image_path, TARGET_SIZE, FIGURE_SIZE_BASIC)
-
-            print(f"\nRunning detailed comparison with directional components...")
-            detailed_comparison(image_path, TARGET_SIZE, FIGURE_SIZE_DETAILED)
-
-        except Exception as e:
-            print(f"Error processing {image_path}: {e}")
-            continue
+    main()

@@ -1,0 +1,486 @@
+\documentclass[12pt,a4paper]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{subcaption}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+
+% Page geometry
+\geometry{
+    top=2.5cm,
+    bottom=2.5cm,
+    left=2.5cm,
+    right=2.5cm
+}
+
+% Header and footer
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Lab Report}
+\lhead{Artificial Vision \& Pattern Recognition}
+\cfoot{\thepage}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    citecolor=blue,
+}
+
+% Code listing style
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray}
+}
+
+% Title information
+
+\title{
+    \textbf{Artificial Vision and Pattern Recognition} \\
+    \Large Laboratory Report \\
+    \large Edge Detection, Corner Detection, and Morphological Operations
+}
+\author{Audigier Matteo}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\newpage
+
+
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Introduction}
+
+Computer vision and pattern recognition are fundamental fields in artificial intelligence
+that enable machines to interpret and understand visual information. This laboratory session
+focuses on three essential low-level image processing techniques:
+
+\begin{itemize}
+    \item \textbf{Edge Detection}: Identifying significant transitions in image intensity that often correspond to object boundaries.
+    \item \textbf{Corner Detection}: Locating points where two or more edges meet, which are highly distinctive features for image analysis.
+    \item \textbf{Morphological Operations}: Applying set theory-based operations to enhance and extract specific image features.
+\end{itemize}
+
+These techniques form the foundation for higher-level vision tasks such as object recognition,
+image segmentation, and feature extraction. The source code for the implementations can be found 
+at \url{https://github.com/audigiem/AVPR_labs}.
+
+% ============================================================================
+\section{Task 1: Edge Detection}
+
+\subsection{Objective}
+The objective of this task was to implement and compare different edge detection filters to understand their characteristics and performance on grayscale images.
+
+\subsection{Methodology}
+
+Edge detection identifies points in an image where the brightness changes sharply. We implemented three gradient-based edge detection filters:
+
+\subsubsection{Sobel Filter}
+The Sobel operator uses two 3×3 convolution kernels to compute approximations of the horizontal and vertical derivatives:
+
+\[
+G_x = \begin{bmatrix}
+-1 & 0 & 1 \\
+-2 & 0 & 2 \\
+-1 & 0 & 1
+\end{bmatrix} * I
+\quad
+G_y = \begin{bmatrix}
+-1 & -2 & -1 \\
+0 & 0 & 0 \\
+1 & 2 & 1
+\end{bmatrix} * I
+\]
+
+The magnitude is computed as: $G = \sqrt{G_x^2 + G_y^2}$
+
+\subsubsection{Prewitt Filter}
+The Prewitt operator uses simpler kernels with uniform weights:
+
+\[
+G_x = \begin{bmatrix}
+-1 & 0 & 1 \\
+-1 & 0 & 1 \\
+-1 & 0 & 1
+\end{bmatrix} * I
+\quad
+G_y = \begin{bmatrix}
+-1 & -1 & -1 \\
+0 & 0 & 0 \\
+1 & 1 & 1
+\end{bmatrix} * I
+\]
+
+\subsubsection{Scharr Filter}
+The Scharr operator uses optimized 3×3 kernels for better rotational symmetry:
+
+\[
+G_x = \begin{bmatrix}
+-3 & 0 & 3 \\
+-10 & 0 & 10 \\
+-3 & 0 & 3
+\end{bmatrix} * I
+\quad
+G_y = \begin{bmatrix}
+-3 & -10 & -3 \\
+0 & 0 & 0 \\
+3 & 10 & 3
+\end{bmatrix} * I
+\]
+
+\subsection{Results}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../outputs/edgeDetection/edge_detection_comparison.png}
+    \caption{Comparison of edge detection filters: Sobel, Prewitt, and Scharr}
+    \label{fig:edge_comparison}
+\end{figure}
+
+Figure \ref{fig:edge_comparison} shows the comparison of all three edge detection filters applied to the same input image. The results demonstrate subtle but important differences in edge detection quality.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../outputs/edgeDetection/directional_edges_comparison.png}
+    \caption{Directional edge detection showing horizontal and vertical edges separately}
+    \label{fig:directional_edges}
+\end{figure}
+
+Figure \ref{fig:directional_edges} illustrates the directional sensitivity of each filter, showing how edges in different orientations are detected.
+
+\subsection{Analysis and Discussion}
+
+\begin{table}[H]
+\centering
+\caption{Comparison of Edge Detection Filters}
+\label{tab:edge_filters}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Characteristic} & \textbf{Sobel} & \textbf{Prewitt} & \textbf{Scharr} \\ \midrule
+Sensitivity & Medium & Low & High \\
+Noise Resistance & Good & Medium & Lower \\
+Computational Cost & Medium & Low & Medium \\
+Edge Localization & Good & Medium & Excellent \\
+Rotational Symmetry & Good & Medium & Excellent \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Key Findings:}
+\begin{itemize}
+    \item \textbf{Sobel Filter}: Provides the best balance between noise suppression and edge detection accuracy. Most widely used in practice.
+    \item \textbf{Prewitt Filter}: Simpler implementation with slightly more noise sensitivity. Suitable for applications where computational efficiency is critical.
+    \item \textbf{Scharr Filter}: Superior rotational invariance and edge localization. Better for detecting small-scale edges and when precise edge orientation is important.
+    \item All three filters effectively detect edges but with different trade-offs between sensitivity, noise handling, and computational cost.
+\end{itemize}
+
+% ============================================================================
+\section{Task 2: Corner Detection}
+
+\subsection{Objective}
+The objective was to implement the Harris Corner Detection method and investigate how different parameters affect corner detection performance.
+
+\subsection{Methodology}
+
+The Harris corner detector identifies corners by analyzing the local intensity structure of an image. The algorithm computes the structure tensor (also called the second moment matrix):
+
+\[
+M = \sum_{(x,y) \in W} \begin{bmatrix}
+I_x^2 & I_x I_y \\
+I_x I_y & I_y^2
+\end{bmatrix}
+\]
+
+where $I_x$ and $I_y$ are image derivatives, and $W$ is a local window.
+
+The Harris corner response is computed as:
+\[
+R = \det(M) - k \cdot \text{trace}(M)^2 = \lambda_1 \lambda_2 - k(\lambda_1 + \lambda_2)^2
+\]
+
+Points where $R$ exceeds a threshold are classified as corners.
+
+\subsubsection{Parameters}
+The Harris detector has several key parameters:
+\begin{itemize}
+    \item \textbf{Block Size}: Size of the neighborhood considered for corner detection
+    \item \textbf{Aperture Size (ksize)}: Size of the Sobel kernel used for gradient computation
+    \item \textbf{k}: Harris detector free parameter (typically 0.04-0.06)
+    \item \textbf{Threshold}: Minimum corner response value to accept
+\end{itemize}
+
+\subsection{Results}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../outputs/cornerDetection/harris_corner_detection_default.png}
+    \caption{Harris corner detection with default parameters: block\_size=2, ksize=3, k=0.04}
+    \label{fig:harris_default}
+\end{figure}
+
+Figure \ref{fig:harris_default} shows the Harris corner detection results with default parameters, including the corner response map and detected corner locations.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../outputs/cornerDetection/harris_parameter_comparison.png}
+    \caption{Comparison of Harris corner detection with different parameter configurations}
+    \label{fig:harris_comparison}
+\end{figure}
+
+Figure \ref{fig:harris_comparison} demonstrates how varying parameters affects the number and quality of detected corners.
+
+\subsection{Analysis and Discussion}
+
+\subsubsection{Effect of Block Size}
+\begin{itemize}
+    \item \textbf{Smaller blocks (2-3)}: Detect finer corners and small-scale features. More sensitive to noise and texture variations.
+    \item \textbf{Larger blocks (5-7)}: Detect more prominent, stable corners. Better noise resistance but may miss fine details.
+\end{itemize}
+
+\subsubsection{Effect of Aperture Size}
+\begin{itemize}
+    \item \textbf{Smaller aperture (3)}: Faster computation, sharper gradient estimates, more sensitive to noise.
+    \item \textbf{Larger aperture (5-7)}: More smoothing, better noise handling, may blur fine corners.
+\end{itemize}
+
+\subsubsection{Effect of k Parameter}
+\begin{itemize}
+    \item \textbf{Lower k (0.02)}: More sensitive, detects more corners including weaker ones. Risk of false positives.
+    \item \textbf{Higher k (0.06)}: More selective, detects only strong corners. May miss subtle features.
+\end{itemize}
+
+\subsubsection{Effect of Threshold}
+\begin{itemize}
+    \item \textbf{Lower threshold (0.005)}: More corners detected, including weaker responses.
+    \item \textbf{Higher threshold (0.02)}: Fewer, higher-quality corners. Better for feature matching.
+\end{itemize}
+
+\textbf{Recommendations:}
+\begin{itemize}
+    \item For general-purpose corner detection: block\_size=2, ksize=3, k=0.04, threshold=0.01
+    \item For noisy images: Increase block\_size and ksize
+    \item For fine detail preservation: Use smaller block\_size with moderate threshold
+    \item For robust feature matching: Increase threshold and k to select only strong corners
+\end{itemize}
+
+% ============================================================================
+\section{Task 3: Morphological Operations}
+
+\subsection{Objective}
+The objective was to implement morphological operations for image enhancement and explore the effects of different structuring elements, sizes, and iteration counts.
+
+\subsection{Methodology}
+
+Morphological operations are based on set theory and process images based on their shapes. They use a structuring element (kernel) to probe and interact with image structures.
+
+\subsubsection{Basic Operations}
+
+\textbf{Erosion:} Shrinks bright regions by removing pixels at object boundaries.
+\[
+A \ominus B = \{z \in E | B_z \subseteq A\}
+\]
+
+\textbf{Dilation:} Expands bright regions by adding pixels at object boundaries.
+\[
+A \oplus B = \{z \in E | (\hat{B})_z \cap A \neq \emptyset\}
+\]
+
+\textbf{Opening:} Erosion followed by dilation. Removes small objects and smooths contours.
+\[
+A \circ B = (A \ominus B) \oplus B
+\]
+
+\textbf{Closing:} Dilation followed by erosion. Fills small holes and connects nearby objects.
+\[
+A \bullet B = (A \oplus B) \ominus B
+\]
+
+\subsubsection{Advanced Operations}
+
+\textbf{Morphological Gradient:} Difference between dilation and erosion. Highlights edges.
+\[
+\text{Gradient}(A) = (A \oplus B) - (A \ominus B)
+\]
+
+\textbf{Top Hat:} Difference between original and opening. Extracts small bright features.
+\[
+\text{TopHat}(A) = A - (A \circ B)
+\]
+
+\textbf{Black Hat:} Difference between closing and original. Extracts small dark features.
+\[
+\text{BlackHat}(A) = (A \bullet B) - A
+\]
+
+\subsection{Results}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../outputs/morphologicalOperations/basic_morphological_operations.png}
+    \caption{Basic morphological operations: erosion, dilation, opening, and closing}
+    \label{fig:morph_basic}
+\end{figure}
+
+Figure \ref{fig:morph_basic} shows the four fundamental morphological operations and their effects on the input image.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../outputs/morphologicalOperations/structuring_elements_comparison.png}
+    \caption{Effect of different structuring elements (rectangle, ellipse, cross) and sizes}
+    \label{fig:struct_elements}
+\end{figure}
+
+Figure \ref{fig:struct_elements} compares how different structuring element shapes and sizes affect erosion and dilation operations.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../outputs/morphologicalOperations/iterations_comparison.png}
+    \caption{Effect of iteration count on erosion and dilation operations}
+    \label{fig:iterations}
+\end{figure}
+
+Figure \ref{fig:iterations} illustrates the progressive effect of multiple iterations on morphological operations.
+
+\subsection{Analysis and Discussion}
+
+\subsubsection{Structuring Element Selection}
+
+\begin{table}[H]
+\centering
+\caption{Characteristics of Different Structuring Elements}
+\label{tab:struct_elements}
+\begin{tabular}{@{}lp{8cm}@{}}
+\toprule
+\textbf{Element} & \textbf{Characteristics and Applications} \\ \midrule
+Rectangle & Directional effect. Good for linear features and text. Preserves horizontal/vertical structures. \\
+Ellipse & Isotropic (rotation-invariant). Good for circular and blob-like features. Most natural for general use. \\
+Cross & Minimal effect. Preserves corners better. Good for preserving shape details while reducing noise. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Size and Iteration Effects}
+
+\textbf{Size Impact:}
+\begin{itemize}
+    \item Larger structuring elements create stronger effects
+    \item 3×3: Subtle changes, preserves fine details
+    \item 5×5: Moderate effects, good balance
+    \item 7×7 and larger: Strong effects, may remove desired features
+\end{itemize}
+
+\textbf{Iteration Impact:}
+\begin{itemize}
+    \item Each iteration applies the operation again to the result
+    \item Erosion iterations: Progressive shrinking, eventually objects disappear
+    \item Dilation iterations: Progressive expansion, objects may merge
+    \item Multiple iterations with small kernels ≈ Single iteration with large kernel
+    \item More control with iterations, but higher computational cost
+\end{itemize}
+
+\subsubsection{Practical Applications}
+
+\begin{table}[H]
+\centering
+\caption{Applications of Morphological Operations}
+\label{tab:morph_applications}
+\begin{tabular}{@{}lp{9cm}@{}}
+\toprule
+\textbf{Operation} & \textbf{Applications} \\ \midrule
+Erosion & Remove salt noise, separate touching objects, thin lines \\
+Dilation & Remove pepper noise, fill gaps, thicken lines, connect components \\
+Opening & Remove small bright objects, smooth contours, background removal \\
+Closing & Fill holes, connect nearby objects, remove small dark regions \\
+Gradient & Edge detection, boundary extraction, feature emphasis \\
+Top Hat & Extract small bright features, uneven illumination correction \\
+Black Hat & Extract small dark features, detect defects \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Key Insights:}
+\begin{itemize}
+    \item Opening is effective for removing noise (small bright spots) while preserving object shapes
+    \item Closing is excellent for filling gaps and connecting broken text or lines
+    \item Morphological gradient provides a simpler alternative to differential edge detectors
+    \item Top hat and black hat transforms are powerful for feature extraction in non-uniform lighting
+    \item Combined operations (e.g., opening + gradient) can create sophisticated enhancement pipelines
+\end{itemize}
+
+% ============================================================================
+\section*{Acknowledgments}
+This work was completed as part of the Artificial Vision and Pattern Recognition course. The implementation utilized OpenCV, NumPy, SciPy, and Matplotlib libraries.
+
+% ============================================================================
+\begin{thebibliography}{9}
+
+\bibitem{sobel1968}
+Sobel, I., \& Feldman, G. (1968).
+\textit{A 3x3 isotropic gradient operator for image processing}.
+Presented at the Stanford Artificial Intelligence Project.
+
+\bibitem{harris1988}
+Harris, C., \& Stephens, M. (1988).
+\textit{A combined corner and edge detector}.
+Alvey vision conference, 15(50), 10-5244.
+
+\bibitem{gonzalez2008}
+Gonzalez, R. C., \& Woods, R. E. (2008).
+\textit{Digital image processing} (3rd ed.).
+Prentice Hall.
+
+\bibitem{scharr2000}
+Scharr, H. (2000).
+\textit{Optimal operators in digital image processing}.
+PhD thesis, University of Heidelberg.
+
+\bibitem{opencv}
+Bradski, G. (2000).
+\textit{The OpenCV Library}.
+Dr. Dobb's Journal of Software Tools.
+
+\bibitem{prewitt1970}
+Prewitt, J. M. (1970).
+\textit{Object enhancement and extraction}.
+Picture processing and Psychopictorics, 10(1), 15-19.
+
+\bibitem{serra1982}
+Serra, J. (1982).
+\textit{Image analysis and mathematical morphology} (Vol. 1).
+Academic Press.
+
+\bibitem{noble1989}
+Noble, J. A. (1989).
+\textit{Finding corners}.
+Image and Vision Computing, 6(2), 121-128.
+
+\end{thebibliography}
+
+\end{document}
