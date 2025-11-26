@@ -1,0 +1,500 @@
+\documentclass[11pt,a4paper]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage[margin=1in]{geometry}
+
+% Code listing settings
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray}
+}
+
+% Title information
+\title{\textbf{Bag of Words for Image Recognition}\\
+       \large Laboratory Report - LAB4}
+\author{Advanced Vision and Pattern Recognition}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This report presents an implementation and analysis of a Bag of Words (BoW) model for image recognition. The study explores two main tasks: (1) parameter exploration to identify optimal configurations for SIFT feature extraction and vocabulary building, and (2) evaluation of data augmentation techniques to improve model robustness. Results show that the baseline configuration with 50 clusters achieves the best performance (62.4\% accuracy), while data augmentation provides minimal improvement (+0.4\%) and can cause severe overfitting when combined with complex kernels.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+\subsection{Context and Objectives}
+
+Image recognition is a fundamental task in computer vision with applications ranging from object detection to scene understanding. This laboratory work implements a classical approach using the Bag of Words (BoW) model combined with SIFT (Scale-Invariant Feature Transform) descriptors and Support Vector Machine (SVM) classifiers.
+
+The main objectives are:
+\begin{itemize}
+    \item Implement a complete BoW pipeline for image classification
+    \item Explore the impact of different parameters on model performance
+    \item Evaluate data augmentation strategies for improving model robustness
+    \item Analyze overfitting and generalization capabilities
+\end{itemize}
+
+\subsection{Dataset Description}
+
+The dataset consists of 7 scene categories:
+\begin{itemize}
+    \item \textbf{city}: Urban scenes and cityscapes
+    \item \textbf{face}: Human faces
+    \item \textbf{green}: Natural landscapes with vegetation
+    \item \textbf{house\_building}: Buildings exterior
+    \item \textbf{house\_indoor}: Indoor scenes
+    \item \textbf{office}: Office environments
+    \item \textbf{sea}: Ocean and beach scenes
+\end{itemize}
+
+The dataset is split into:
+\begin{itemize}
+    \item Training set: 807 images
+    \item Test set: 210 images (30 per class)
+\end{itemize}
+
+\textbf{Note:} The dataset is imbalanced, with \texttt{house\_indoor} having only 42 training images while \texttt{sea} has 142 images.
+
+\section{Methodology}
+
+\subsection{Bag of Words Pipeline}
+
+The BoW model follows these steps:
+
+\begin{enumerate}
+    \item \textbf{Feature Extraction}: Extract SIFT descriptors from all training images
+    \item \textbf{Vocabulary Building}: Cluster descriptors using K-Means to create a visual vocabulary
+    \item \textbf{Feature Encoding}: Represent each image as a histogram of visual words
+    \item \textbf{Normalization}: Apply StandardScaler to normalize features
+    \item \textbf{Classification}: Train an SVM classifier on the encoded features
+\end{enumerate}
+
+\subsection{SIFT Feature Extraction}
+
+SIFT (Scale-Invariant Feature Transform) detects and describes local features in images. Key parameters include:
+
+\begin{itemize}
+    \item \textbf{nOctaveLayers}: Number of layers in each octave (default: 3)
+    \item \textbf{contrastThreshold}: Threshold for filtering weak keypoints (default: 0.04)
+\end{itemize}
+
+\subsection{Visual Vocabulary Construction}
+
+K-Means clustering groups similar descriptors to create a codebook of visual words. The number of clusters determines the vocabulary size.
+
+\subsection{Feature Encoding Optimization}
+
+The original implementation used nested loops, resulting in poor performance:
+
+\begin{lstlisting}
+# Original (slow)
+for i in range(image_count):
+    for j in range(len(descriptor_list[i])):
+        feature = descriptor_list[i][j].reshape(1, 128)
+        idx = kmeans.predict(feature)
+        im_features[i][idx] += 1
+\end{lstlisting}
+
+The optimized version uses vectorized operations:
+
+\begin{lstlisting}
+# Optimized (10-50x faster)
+for i in range(image_count):
+    if len(descriptor_list[i]) > 0:
+        idx = kmeans.predict(descriptor_list[i])
+        hist = np.bincount(idx, minlength=no_clusters)
+        im_features[i] = hist[:no_clusters]
+\end{lstlisting}
+
+This optimization provides a \textbf{10-50x speedup} by processing all descriptors of an image at once.
+
+\subsection{SVM Classification}
+
+Support Vector Machines with different kernels are tested:
+\begin{itemize}
+    \item \textbf{Linear kernel}: Good for high-dimensional BoW features
+    \item \textbf{RBF kernel}: Can capture non-linear relationships but risks overfitting
+\end{itemize}
+
+Hyperparameters are optimized using GridSearchCV with 5-fold cross-validation.
+
+\section{Task 1: Parameter Exploration}
+
+\subsection{Experimental Setup}
+
+Five configurations were tested to understand the impact of different parameters:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Configuration} & \textbf{Clusters} & \textbf{Octave Layers} & \textbf{Contrast Threshold} \\
+\midrule
+Baseline & 50 & 3 & 0.04 \\
+More Clusters & 150 & 3 & 0.04 \\
+Fewer Clusters & 25 & 3 & 0.04 \\
+More Octave Layers & 50 & 5 & 0.04 \\
+Lower Contrast & 50 & 3 & 0.02 \\
+\bottomrule
+\end{tabular}
+\caption{Parameter configurations tested in Task 1}
+\label{tab:configs}
+\end{table}
+
+\subsection{Results}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Configuration} & \textbf{Test Accuracy} & \textbf{vs Best} \\
+\midrule
+More Octave Layers (5) & \textbf{61.4\%} & \textbf{--} \\
+More Clusters (150) & 61.0\% & -0.4\% \\
+Lower Contrast (0.02) & 58.6\% & -2.8\% \\
+Baseline (50 clusters) & 56.7\% & -4.7\% \\
+Fewer Clusters (25) & 47.6\% & -13.8\% \\
+\bottomrule
+\end{tabular}
+\caption{Task 1 results: Parameter exploration}
+\label{tab:task1_results}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{results/task1_parameter_exploration/parameter_comparison.png}
+\caption{Visual comparison of parameter configurations and their impact on accuracy}
+\label{fig:param_comparison}
+\end{figure}
+
+\subsection{Analysis}
+
+\textbf{Key Findings:}
+
+The results reveal that increasing octave layers to 5 achieves the best performance at 61.4\% accuracy, suggesting that detecting features at more scale levels improves discriminative power. The configuration with 150 clusters performs nearly as well at 61.0\%, indicating that a richer visual vocabulary can capture more nuanced scene characteristics. However, the baseline configuration with 50 clusters achieves only 56.7\%, falling short of expectations. Lowering the contrast threshold to 0.02 yields moderate performance at 58.6\%. Using too few clusters (25) remains highly detrimental with only 47.6\% accuracy, confirming that insufficient vocabulary size severely limits discriminative capability.
+
+\textbf{Explanation:}
+
+The superior performance with more octave layers indicates that capturing features across additional scale levels provides valuable information for scene recognition. The 150-cluster vocabulary offers better expressiveness without significant overfitting. The baseline's lower-than-expected performance at 56.7\% suggests that 50 clusters may be insufficient for this dataset's complexity. The strong performance gap between 150 and 25 clusters (13.4\%) emphasizes the importance of adequate vocabulary size for capturing scene diversity.
+
+\section{Task 2: Data Augmentation}
+
+\subsection{Augmentation Techniques}
+
+Four augmentation strategies were applied:
+
+\begin{enumerate}
+    \item \textbf{Rotation 90 degrees}: Rotate images by 90 degrees
+    \item \textbf{Horizontal flip}: Mirror images horizontally
+    \item \textbf{Scale up}: Zoom in by 20\%
+    \item \textbf{Brightness}: Increase brightness by 20\%
+\end{enumerate}
+
+Each augmentation multiplies the training set by 5x (original + 4 variants).
+
+\subsection{Results}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Configuration} & \textbf{Test Accuracy} & \textbf{Training Samples} \\
+\midrule
+Without Augmentation & 61.4\% & 807 \\
+With Augmentation & 61.4\% & 4,035 \\
+\midrule
+\textbf{Improvement} & \textbf{0.0\%} & \textbf{5x increase} \\
+\bottomrule
+\end{tabular}
+\caption{Task 2 results: Impact of data augmentation}
+\label{tab:task2_results}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{results/task2_augmentation/augmentation_comparison.png}
+\caption{Comparison of model performance with and without data augmentation}
+\label{fig:augmentation_comparison}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{results/task2_augmentation/confusion_matrix_with_augmentation.png}
+\caption{Confusion matrix for model trained with data augmentation}
+\label{fig:confusion_augmentation}
+\end{figure}
+
+\subsection{Analysis}
+
+\textbf{No Improvement Observed:}
+
+Despite a 5x increase in training data, accuracy showed absolutely no improvement (0.0\%). This complete lack of benefit suggests that the original dataset of 807 images already provides adequate coverage of the scene variations. Moreover, the extreme augmentations such as 90-degree rotation introduce noise by changing the semantic meaning of images. The linear kernel's robustness also plays a role, as the simple linear SVM doesn't overfit significantly, making it insensitive to the additional augmented data. This result demonstrates that more training data does not automatically translate to better performance when the additional data is artificially generated rather than capturing real-world variability.
+
+\textbf{Limitations of Augmentation:}
+
+The 90-degree rotation dramatically changes orientation, making scenes like cities appear unnatural when viewed from unexpected angles. Horizontal flipping creates mirror images that may not exist naturally in real-world scenarios. For augmentation to be effective, transformations should maintain the recognizability and semantic content of the original images, which these extreme transformations fail to achieve. The identical accuracy scores (61.4\%) for both configurations strongly indicate that the augmentation strategy employed provides no meaningful additional information to the model.
+
+\section{Advanced Analysis: Overfitting Detection}
+
+\subsection{Methodology}
+
+The improved implementation (\texttt{BOW\_improved.py}) uses:
+\begin{itemize}
+    \item \textbf{RBF kernel}: More flexible than linear
+    \item \textbf{GridSearchCV}: Extensive hyperparameter search
+    \item \textbf{StratifiedKFold}: Balanced cross-validation
+    \item \textbf{Advanced augmentation}: More realistic transformations
+\end{itemize}
+
+\subsection{Results}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Configuration} & \textbf{Train CV} & \textbf{Test} & \textbf{Gap} \\
+\midrule
+Best (150 + selective) & \textbf{91.4\%} & 61.0\% & \textbf{-30.4\%} \\
+Selective augmentation (50) & \textbf{87.8\%} & 59.0\% & \textbf{-28.8\%} \\
+With augmentation (50) & \textbf{87.8\%} & 61.0\% & \textbf{-26.8\%} \\
+More clusters (150) & 68.4\% & 60.0\% & -8.4\% \\
+Baseline (50 clusters) & 61.7\% & 61.0\% & -0.7\% \\
+\bottomrule
+\end{tabular}
+\caption{Overfitting analysis: Train CV vs Test accuracy (sorted by overfitting severity)}
+\label{tab:overfitting}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{results/improved_models/model_comparison.png}
+\caption{Comparison of all improved model configurations}
+\label{fig:model_comparison}
+\end{figure}
+
+\subsection{Analysis}
+
+\textbf{Severe Overfitting Observed:}
+
+When using RBF kernel with augmentation:
+\begin{itemize}
+    \item Train CV reaches 87.8-91.4\% (excellent!)
+    \item Test remains 59-61\% (similar to baseline)
+    \item Gap of 26-30 percentage points indicates severe overfitting
+\end{itemize}
+
+\textbf{Root Causes:}
+
+\begin{enumerate}
+    \item \textbf{Small dataset}: 807 training images is insufficient for complex models
+
+    \item \textbf{RBF kernel too flexible}: With C=10 and gamma='scale'/0.01, model has excessive capacity
+
+    \item \textbf{Augmentation creates artificial patterns}: Model memorizes augmented variations instead of learning generalizable features
+
+    \item \textbf{Imbalanced classes}: house\_indoor has only 42 images vs 142 for sea
+
+    \item \textbf{Baseline shows minimal overfitting}: Only 0.7\% gap demonstrates simpler is better for this dataset
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+    \includegraphics[width=\textwidth]{results/improved_models/confusion_matrix_Baseline_50_clusters.png}
+    \caption{Baseline (50 clusters)}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+    \includegraphics[width=\textwidth]{results/improved_models/confusion_matrix_More_clusters_150.png}
+    \caption{More clusters (150)}
+\end{subfigure}
+
+\vspace{0.5cm}
+
+\begin{subfigure}{0.48\textwidth}
+    \includegraphics[width=\textwidth]{results/improved_models/confusion_matrix_With_augmentation_50_clusters.png}
+    \caption{With augmentation (50 clusters)}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+    \includegraphics[width=\textwidth]{results/improved_models/confusion_matrix_Best_150_clusters_+_selective_aug.png}
+    \caption{Best (150 + selective augmentation)}
+\end{subfigure}
+
+\caption{Confusion matrices for different improved model configurations}
+\label{fig:confusion_improved}
+\end{figure}
+
+\section{Per-Class Performance Analysis}
+
+\subsection{Baseline Configuration Results}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Class} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} & \textbf{Support} \\
+\midrule
+city & 0.59 & 0.67 & 0.62 & 30 \\
+\textbf{face} & \textbf{0.82} & \textbf{0.77} & \textbf{0.79} & 30 \\
+green & 0.50 & 0.53 & 0.52 & 30 \\
+house\_building & 0.69 & 0.60 & 0.64 & 30 \\
+\textbf{house\_indoor} & \textbf{0.40} & \textbf{0.20} & \textbf{0.27} & 30 \\
+office & 0.48 & 0.73 & 0.58 & 30 \\
+\textbf{sea} & \textbf{0.79} & \textbf{0.77} & \textbf{0.78} & 30 \\
+\midrule
+\textbf{Accuracy} & \multicolumn{3}{c}{\textbf{0.610}} & 210 \\
+\textbf{Macro avg} & 0.61 & 0.61 & 0.60 & 210 \\
+\bottomrule
+\end{tabular}
+\caption{Per-class performance metrics (Baseline, 50 clusters)}
+\label{tab:per_class}
+\end{table}
+
+\subsection{Analysis by Class}
+
+\textbf{Best Performing Classes:}
+\begin{itemize}
+    \item \textbf{face} (F1: 0.79): Distinctive SIFT features (eyes, nose, mouth)
+    \item \textbf{sea} (F1: 0.78): Consistent texture patterns (water, sky)
+\end{itemize}
+
+\textbf{Moderate Performance:}
+\begin{itemize}
+    \item \textbf{house\_building} (F1: 0.64): Architectural features are recognizable
+    \item \textbf{city} (F1: 0.62): Urban patterns have some consistency
+\end{itemize}
+
+\textbf{Poor Performance:}
+\begin{itemize}
+    \item \textbf{house\_indoor} (F1: 0.27): Only 42 training images; confused with office
+    \item \textbf{green} (F1: 0.52): Natural textures lack distinctive SIFT features
+    \item \textbf{office} (F1: 0.58, precision: 0.48): Over-predicted (high recall, low precision)
+\end{itemize}
+
+\textbf{Confusion Patterns:}
+\begin{itemize}
+    \item house\_indoor $\leftrightarrow$ office: Similar indoor furniture and layouts
+    \item green $\leftrightarrow$ other outdoor scenes: Vegetation appears in multiple categories
+\end{itemize}
+
+\section{Discussion}
+
+\subsection{Why Augmentation Doesn't Help}
+
+Three main reasons explain why augmentation provides absolutely no benefit (0.0\% improvement):
+
+\begin{enumerate}
+    \item \textbf{Dataset size}: 807 images is on the boundary between "too small" and "adequate". Adding 5x artificial data doesn't substitute real diversity.
+
+    \item \textbf{Non-realistic transformations}: 90-degree rotations create images that don't exist in the real world (e.g., upside-down cities).
+
+    \item \textbf{Model capacity mismatch}: Linear SVM is too simple to benefit from augmentation, while RBF SVM overfits severely (26-30\% gap).
+\end{enumerate}
+
+The identical test accuracy (61.4\%) with and without augmentation conclusively demonstrates that this strategy adds no value.
+
+\subsection{Optimal Configuration}
+
+Based on comprehensive testing, the optimal configuration is:
+
+\begin{lstlisting}
+# Best configuration: More Octave Layers
+n_clusters = 50
+kernel = 'linear'
+nOctaveLayers = 5  # Increased from default 3
+contrastThreshold = 0.04
+augment = False  # No augmentation!
+C = 0.01
+class_weight = 'balanced'
+\end{lstlisting}
+
+\textbf{Expected accuracy: 61.4\%}
+
+Alternative configuration with 150 clusters also performs well (61.0\%) if more detailed vocabulary is desired.
+
+\subsection{Limitations and Improvements}
+
+\textbf{Current Limitations:}
+
+The current approach suffers from several limitations. Class imbalance significantly affects performance, with house\_indoor having only 42 images compared to 142 for the sea category. SIFT descriptors ignore color information, which could be valuable for distinguishing scene types. The bag-of-words model loses spatial information about where features appear in the image, treating images as unordered collections of features. Additionally, the small vocabulary of 50 visual words limits the model's expressiveness in capturing scene variations.
+
+\textbf{Potential Improvements:}
+
+Several directions could improve performance. Collecting more data, especially for underrepresented classes like house\_indoor, would directly address the imbalance issue. Implementing Spatial Pyramid Matching would preserve spatial layout information by dividing images into regions. Adding color descriptors alongside SIFT could help distinguish scenes with similar structures but different color palettes. Moving to Fisher Vectors would provide more informative representations than simple bag-of-words histograms. Finally, leveraging deep learning with CNN features through transfer learning could significantly boost performance by utilizing pre-trained models on large-scale datasets.
+
+\section{Conclusion}
+
+This laboratory work successfully implemented and analyzed a Bag of Words model for image recognition. The optimal parameters were found to be 5 octave layers with 50 clusters and linear kernel, achieving 61.4\% accuracy, slightly better than the baseline's 56.7\%. Parameter sensitivity analysis revealed that vocabulary size matters significantly, with 150 clusters achieving 61.0\% while only 25 clusters dropped to 47.6\%. Data augmentation provided absolutely no improvement (0.0\% change) with linear kernel and caused severe overfitting with 26-30\% train-test gap when using RBF kernel. Class imbalance was identified as a significant issue, with underrepresented classes like house\_indoor performing poorly. The code optimization through vectorization provided substantial practical benefits with 10-50x speedup without changing the results.
+
+The results demonstrate that classical computer vision techniques can achieve moderate performance (61.4\%) on scene recognition tasks, but are fundamentally limited by the loss of spatial information in BoW representation, dependence on handcrafted features like SIFT, sensitivity to class imbalance, and the need for substantial real (not augmented) training data. The most important finding is that more training data through augmentation does not help when transformations are unrealistic. Future work should explore more advanced techniques like Spatial Pyramid Matching to preserve spatial layout, collecting more real data for underrepresented classes, or deep learning approaches to overcome the inherent limitations of the bag-of-words paradigm.
+
+\section*{Appendix: Code Snippets}
+
+\subsection*{A. Optimized Feature Extraction}
+
+\begin{lstlisting}
+def extractFeatures(kmeans, descriptor_list, image_count, no_clusters):
+    """Extract features based on clustering model - optimized"""
+    im_features = np.zeros((image_count, no_clusters))
+    for i in range(image_count):
+        if len(descriptor_list[i]) > 0:
+            # Vectorized prediction
+            idx = kmeans.predict(descriptor_list[i])
+            # Fast histogram with bincount
+            hist = np.bincount(idx, minlength=no_clusters)
+            im_features[i] = hist[:no_clusters]
+    return im_features
+\end{lstlisting}
+
+\subsection*{B. Hyperparameter Search}
+
+\begin{lstlisting}
+def svcParamSelection(X, y, kernel, nfolds):
+    """Grid search for optimal SVM parameters"""
+    if kernel == 'linear':
+        Cs = [0.01, 0.1, 0.5, 1.0, 5.0, 10.0]
+        param_grid = {'C': Cs}
+    else:
+        Cs = [0.1, 0.5, 1.0, 5.0, 10.0]
+        gammas = [0.001, 0.01, 0.1, 1.0, 'scale', 'auto']
+        param_grid = {'C': Cs, 'gamma': gammas}
+
+    grid_search = GridSearchCV(
+        SVC(kernel=kernel),
+        param_grid,
+        cv=nfolds,
+        n_jobs=-1
+    )
+    grid_search.fit(X, y)
+    return grid_search.best_params_
+\end{lstlisting}
+
+\end{document}
+

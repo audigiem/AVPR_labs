@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')  # Non-interactive backend
 import matplotlib.pyplot as plt
 import os
 import argparse
@@ -10,26 +12,41 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import confusion_matrix, accuracy_score
 import seaborn as sns
 
+# Create output directories
+OUTPUT_DIR = "results"
+TASK1_DIR = os.path.join(OUTPUT_DIR, "task1_parameter_exploration")
+TASK2_DIR = os.path.join(OUTPUT_DIR, "task2_augmentation")
+os.makedirs(TASK1_DIR, exist_ok=True)
+os.makedirs(TASK2_DIR, exist_ok=True)
+
 
 # ==================== HELPER FUNCTIONS ====================
 
 def getFiles(train, path):
     """Collect image file paths from directories"""
     images = []
-    for folder in os.listdir(path):
+    for folder in sorted(os.listdir(path)):  # Sort for consistency
         folder_path = os.path.join(path, folder)
         if os.path.isdir(folder_path):
             for file in os.listdir(folder_path):
-                images.append(os.path.join(path, folder, file))
+                file_path = os.path.join(path, folder, file)
+                if file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')):
+                    images.append(file_path)
     if train:
+        np.random.seed(42)  # Fixed seed for reproducibility
         np.random.shuffle(images)
     return images
 
 
 def readImage(img_path):
-    """Read and resize image"""
+    """Read and resize image with preprocessing"""
     img = cv2.imread(img_path, 0)
-    return cv2.resize(img, (150, 150))
+    if img is None:
+        return None
+    img = cv2.resize(img, (150, 150))
+    # Apply histogram equalization for better feature extraction
+    img = cv2.equalizeHist(img)
+    return img
 
 
 def getDescriptors(sift, img):
@@ -53,14 +70,15 @@ def clusterDescriptors(descriptors, no_clusters):
 
 
 def extractFeatures(kmeans, descriptor_list, image_count, no_clusters):
-    """Extract features based on clustering model"""
-    im_features = np.array([np.zeros(no_clusters) for i in range(image_count)])
+    """Extract features based on clustering model - optimized version"""
+    im_features = np.zeros((image_count, no_clusters))
     for i in range(image_count):
-        for j in range(len(descriptor_list[i])):
-            feature = descriptor_list[i][j]
-            feature = feature.reshape(1, 128)
-            idx = kmeans.predict(feature)
-            im_features[i][idx] += 1
+        if len(descriptor_list[i]) > 0:
+            # Predict all descriptors at once (vectorized)
+            idx = kmeans.predict(descriptor_list[i])
+            # Use bincount for faster histogram computation
+            hist = np.bincount(idx, minlength=no_clusters)
+            im_features[i] = hist[:no_clusters]
     return im_features
 
 
@@ -69,7 +87,7 @@ def normalizeFeatures(scale, features):
     return scale.transform(features)
 
 
-def plotHistogram(im_features, no_clusters, title="Complete Vocabulary Generated"):
+def plotHistogram(im_features, no_clusters, title="Complete Vocabulary Generated", save_path=None):
     """Plot histogram of visual words"""
     x_scalar = np.arange(no_clusters)
     y_scalar = np.array([abs(np.sum(im_features[:, h], dtype=np.int32)) for h in range(no_clusters)])
@@ -78,15 +96,24 @@ def plotHistogram(im_features, no_clusters, title="Complete Vocabulary Generated
     plt.xlabel("Visual Word Index")
     plt.ylabel("Frequency")
     plt.title(title)
-    plt.show()
+    if save_path:
+        plt.savefig(save_path, dpi=150, bbox_inches='tight')
+        print(f"  → Saved histogram to {save_path}")
+    plt.close()
 
 
 def svcParamSelection(X, y, kernel, nfolds):
     """Grid search for optimal SVM parameters"""
-    Cs = [0.5, 0.1, 0.15, 0.2, 0.3]
-    gammas = [0.1, 0.11, 0.095, 0.105]
-    param_grid = {'C': Cs, 'gamma': gammas}
-    grid_search = GridSearchCV(SVC(kernel=kernel), param_grid, cv=nfolds)
+    if kernel == 'linear':
+        # Linear kernel doesn't use gamma
+        Cs = [0.01, 0.1, 0.5, 1.0, 5.0, 10.0]
+        param_grid = {'C': Cs}
+    else:
+        Cs = [0.1, 0.5, 1.0, 5.0, 10.0]
+        gammas = [0.001, 0.01, 0.1, 1.0, 'scale', 'auto']
+        param_grid = {'C': Cs, 'gamma': gammas}
+
+    grid_search = GridSearchCV(SVC(kernel=kernel), param_grid, cv=nfolds, n_jobs=-1, verbose=0)
     grid_search.fit(X, y)
     return grid_search.best_params_
 
@@ -98,18 +125,23 @@ def findSVM(im_features, train_labels, kernel, class_weight=None):
         features = np.dot(im_features, im_features.T)
 
     params = svcParamSelection(features, train_labels, kernel, 5)
-    C_param, gamma_param = params.get("C"), params.get("gamma")
+    C_param = params.get("C")
+    gamma_param = params.get("gamma", 'N/A')
     print(f"Best C: {C_param}, Best gamma: {gamma_param}")
 
     if class_weight is None:
         class_weight = 'balanced'
 
-    svm = SVC(kernel=kernel, C=C_param, gamma=gamma_param, class_weight=class_weight)
+    if kernel == 'linear':
+        svm = SVC(kernel=kernel, C=C_param, class_weight=class_weight)
+    else:
+        svm = SVC(kernel=kernel, C=C_param, gamma=gamma_param, class_weight=class_weight)
+
     svm.fit(features, train_labels)
     return svm
 
 
-def plotConfusionMatrix(y_true, y_pred, classes, normalize=False, title=None, cmap=plt.cm.Blues):
+def plotConfusionMatrix(y_true, y_pred, classes, normalize=False, title=None, cmap=plt.cm.Blues, save_path=None):
     """Generate confusion matrix"""
     if not title:
         title = 'Normalized confusion matrix' if normalize else 'Confusion matrix'
@@ -125,7 +157,10 @@ def plotConfusionMatrix(y_true, y_pred, classes, normalize=False, title=None, cm
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
     plt.tight_layout()
-    plt.show()
+    if save_path:
+        plt.savefig(save_path, dpi=150, bbox_inches='tight')
+        print(f"  → Saved confusion matrix to {save_path}")
+    plt.close()
 
 
 def findAccuracy(true, predictions):
@@ -215,12 +250,14 @@ def trainModelWithParams(path, no_clusters, kernel, nOctaveLayers=3, contrastThr
     for img_path in images:
         # Determine class
         class_index = next((v for k, v in name_to_class.items() if k in img_path), 6)
-        train_labels = np.append(train_labels, class_index)
 
         img = readImage(img_path)
+        if img is None:
+            continue
         des = getDescriptors(sift, img)
         if des is not None:
             descriptor_list.append(des)
+            train_labels = np.append(train_labels, class_index)
 
     print("Computing descriptors...")
     descriptors = vstackDescriptors(descriptor_list)
@@ -257,13 +294,15 @@ def testModelWithParams(path, kmeans, scale, svm, im_features, no_clusters, kern
 
     for img_path in test_images:
         img = readImage(img_path)
+        if img is None:
+            continue
         des = getDescriptors(sift, img)
 
         if des is not None:
             descriptor_list.append(des)
-            # Determine true label
-            true_label = next((k for k, v in name_dict.items() if v in img_path), "sea")
-            true_labels.append(name_dict.get(true_label, "sea"))
+            # Determine true label - fixed logic
+            true_label = next((name_dict[k] for k in name_dict if name_dict[k] in img_path), "sea")
+            true_labels.append(true_label)
 
     descriptors = vstackDescriptors(descriptor_list)
     test_features = extractFeatures(kmeans, descriptor_list, len(descriptor_list), no_clusters)
@@ -277,8 +316,9 @@ def testModelWithParams(path, kmeans, scale, svm, im_features, no_clusters, kern
 
     if show_confusion:
         class_names = ["city", "face", "green", "house_building", "house_indoor", "office", "sea"]
+        save_path = os.path.join(TASK1_DIR, f'confusion_matrix_{no_clusters}clusters.png')
         plotConfusionMatrix(true_labels, predictions, classes=class_names, normalize=True,
-                            title='Normalized Confusion Matrix')
+                            title='Normalized Confusion Matrix', save_path=save_path)
 
     accuracy = findAccuracy(true_labels, predictions)
     return accuracy
@@ -306,7 +346,10 @@ def visualize_parameter_results(results):
                  f'{height:.3f}', ha='center', va='bottom')
 
     plt.tight_layout()
-    plt.show()
+    save_path = os.path.join(TASK1_DIR, 'parameter_comparison.png')
+    plt.savefig(save_path, dpi=150, bbox_inches='tight')
+    print(f"\n→ Saved parameter comparison to {save_path}")
+    plt.close()
 
 
 # ==================== TASK 2: DATA AUGMENTATION ====================
@@ -370,7 +413,8 @@ def task2_augmentation_robustness(train_path, test_path, no_clusters=50):
 
     print("\n--- Testing Model WITH Augmentation ---")
     acc_aug = testModelBasic(test_path, kmeans_aug, scale_aug, svm_aug,
-                             features_aug, no_clusters, 'linear', show_confusion=True)
+                             features_aug, no_clusters, 'linear', show_confusion=True,
+                             save_name='with_augmentation')
 
     # Compare results
     print("\n" + "=" * 60)
@@ -397,7 +441,10 @@ def task2_augmentation_robustness(train_path, test_path, no_clusters=50):
                  f'{height:.3f}', ha='center', va='bottom', fontsize=12)
 
     plt.tight_layout()
-    plt.show()
+    save_path = os.path.join(TASK2_DIR, 'augmentation_comparison.png')
+    plt.savefig(save_path, dpi=150, bbox_inches='tight')
+    print(f"\n→ Saved augmentation comparison to {save_path}")
+    plt.close()
 
     return acc_base, acc_aug
 
@@ -421,6 +468,8 @@ def trainModelBasic(path, no_clusters, kernel, augment=False, aug_types=None):
         class_index = next((v for k, v in name_to_class.items() if k in img_path), 6)
 
         img = readImage(img_path)
+        if img is None:
+            continue
         des = getDescriptors(sift, img)
         if des is not None:
             descriptor_list.append(des)
@@ -449,7 +498,7 @@ def trainModelBasic(path, no_clusters, kernel, augment=False, aug_types=None):
     return kmeans, scale, svm, im_features
 
 
-def testModelBasic(path, kmeans, scale, svm, im_features, no_clusters, kernel, show_confusion=True):
+def testModelBasic(path, kmeans, scale, svm, im_features, no_clusters, kernel, show_confusion=True, save_name='model'):
     """Test model"""
     test_images = getFiles(False, path)
 
@@ -462,6 +511,8 @@ def testModelBasic(path, kmeans, scale, svm, im_features, no_clusters, kernel, s
 
     for img_path in test_images:
         img = readImage(img_path)
+        if img is None:
+            continue
         des = getDescriptors(sift, img)
 
         if des is not None:
@@ -481,7 +532,8 @@ def testModelBasic(path, kmeans, scale, svm, im_features, no_clusters, kernel, s
 
     if show_confusion:
         class_names = ["city", "face", "green", "house_building", "house_indoor", "office", "sea"]
-        plotConfusionMatrix(true_labels, predictions, classes=class_names, normalize=True)
+        save_path = os.path.join(TASK2_DIR, f'confusion_matrix_{save_name}.png')
+        plotConfusionMatrix(true_labels, predictions, classes=class_names, normalize=True, save_path=save_path)
 
     accuracy = findAccuracy(true_labels, predictions)
     return accuracy
