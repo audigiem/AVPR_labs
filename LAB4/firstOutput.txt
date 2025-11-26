@@ -1,0 +1,94 @@
+============================================================
+TASK 1: PARAMETER EXPLORATION AND VISUALIZATION
+============================================================
+
+--- Testing Configuration: Baseline ---
+Clusters: 50, Octave Layers: 3, Contrast Threshold: 0.04
+Found 807 training images
+Computing descriptors...
+Clustering descriptors...
+Extracting features...
+Normalizing features...
+Training SVM...
+Best C: 0.2, Best gamma: 0.1
+Found 210 test images
+Accuracy score: 0.569
+
+--- Testing Configuration: More Clusters ---
+Clusters: 150, Octave Layers: 3, Contrast Threshold: 0.04
+Found 807 training images
+Computing descriptors...
+Clustering descriptors...
+Extracting features...
+Normalizing features...
+Training SVM...
+Best C: 0.1, Best gamma: 0.1
+Found 210 test images
+Accuracy score: 0.617
+
+--- Testing Configuration: Fewer Clusters ---
+Clusters: 25, Octave Layers: 3, Contrast Threshold: 0.04
+Found 807 training images
+Computing descriptors...
+Clustering descriptors...
+Extracting features...
+Normalizing features...
+Training SVM...
+Best C: 0.2, Best gamma: 0.1
+Found 210 test images
+Accuracy score: 0.488
+
+--- Testing Configuration: More Octave Layers ---
+Clusters: 50, Octave Layers: 5, Contrast Threshold: 0.04
+Found 807 training images
+Computing descriptors...
+Clustering descriptors...
+Extracting features...
+Normalizing features...
+Training SVM...
+Best C: 0.5, Best gamma: 0.1
+Found 210 test images
+Accuracy score: 0.576
+
+--- Testing Configuration: Lower Contrast Threshold ---
+Clusters: 50, Octave Layers: 3, Contrast Threshold: 0.02
+Found 807 training images
+Computing descriptors...
+Clustering descriptors...
+Extracting features...
+Normalizing features...
+Training SVM...
+Best C: 0.1, Best gamma: 0.1
+Found 210 test images
+Accuracy score: 0.571
+
+============================================================
+TASK 2: MODEL ROBUSTNESS WITH AUGMENTATION
+============================================================
+
+--- Training Model WITHOUT Augmentation ---
+Found 807 original training images
+Total training samples (with augmentation): 807
+Best C: 0.1, Best gamma: 0.1
+
+--- Testing Model WITHOUT Augmentation ---
+Accuracy score: 0.589
+
+--- Training Model WITH Augmentation ---
+Found 807 original training images
+Total training samples (with augmentation): 4035
+Best C: 0.1, Best gamma: 0.1
+
+--- Testing Model WITH Augmentation ---
+Accuracy score: 0.589
+
+============================================================
+AUGMENTATION IMPACT SUMMARY
+============================================================
+Accuracy WITHOUT augmentation: 0.589
+Accuracy WITH augmentation: 0.589
+Improvement: 0.000 (0.0%)
+
+============================================================
+ALL TASKS COMPLETED!
+============================================================
