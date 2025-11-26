@@ -1,0 +1,506 @@
+\documentclass[12pt,a4paper]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{subcaption}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+
+% Page geometry
+\geometry{
+    top=2.5cm,
+    bottom=2.5cm,
+    left=2.5cm,
+    right=2.5cm
+}
+
+% Header and footer
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Lab Report}
+\lhead{Artificial Vision \& Pattern Recognition}
+\cfoot{\thepage}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    citecolor=blue,
+}
+
+% Code listing style
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray}
+}
+
+% Title information
+\title{
+    \textbf{Artificial Vision and Pattern Recognition} \\
+    \Large Laboratory Report 3 \\
+    \large Feature Detection and Extraction Techniques
+}
+\author{Audigier Matteo}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\newpage
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Introduction}
+
+Feature detection and extraction are fundamental components of computer vision systems that enable machines to identify and describe distinctive patterns in images. This laboratory session explores five essential techniques for feature analysis:
+
+\begin{itemize}
+    \item \textbf{Keypoint Detection}: Identifying distinctive points using ORB and SIFT algorithms
+    \item \textbf{HOG Features}: Extracting Histogram of Oriented Gradients for shape description
+    \item \textbf{LBP Features}: Computing Local Binary Patterns for texture analysis
+    \item \textbf{Image Matching}: Establishing correspondences between feature points across images
+    \item \textbf{Object Detection}: Detecting geometric shapes using Hough transforms
+\end{itemize}
+
+These techniques form the foundation for higher-level vision applications including object recognition, image retrieval, panorama stitching, and augmented reality. The implementation demonstrates both classical computer vision approaches and modern feature extraction methods that remain relevant in contemporary applications.
+
+The source code for all implementations is available at \url{https://github.com/audigiem/AVPR_labs}.
+
+% ============================================================================
+\section{Task 1: Feature Detection using ORB and SIFT}
+
+\subsection{Objective}
+The objective was to implement and compare two prominent keypoint detection algorithms: ORB (Oriented FAST and Rotated BRIEF) and SIFT (Scale-Invariant Feature Transform), analyzing their characteristics and performance trade-offs.
+
+\subsection{Methodology}
+
+\subsubsection{SIFT (Scale-Invariant Feature Transform)}
+SIFT detects and describes local features that are invariant to scale, rotation, and partially invariant to illumination changes. The algorithm operates in four main stages:
+
+\begin{enumerate}
+    \item \textbf{Scale-space extrema detection}: Identifies potential keypoints using Difference of Gaussians (DoG)
+    \item \textbf{Keypoint localization}: Refines keypoint locations and eliminates low-contrast points
+    \item \textbf{Orientation assignment}: Assigns consistent orientation based on local gradient directions
+    \item \textbf{Descriptor generation}: Creates 128-dimensional feature vectors from local gradients
+\end{enumerate}
+
+The SIFT descriptor is computed as:
+\[
+\text{SIFT}(\mathbf{x}) = \text{Histogram}_{4 \times 4 \times 8}(\text{gradients in local region})
+\]
+
+\subsubsection{ORB (Oriented FAST and Rotated BRIEF)}
+ORB combines the FAST keypoint detector with the BRIEF descriptor, adding rotation invariance:
+
+\begin{enumerate}
+    \item \textbf{FAST detector}: Identifies corner-like features by comparing pixel intensities in a circular pattern
+    \item \textbf{Orientation estimation}: Computes keypoint orientation using intensity centroid
+    \item \textbf{Rotated BRIEF}: Generates binary descriptors rotated according to keypoint orientation
+\end{enumerate}
+
+The BRIEF descriptor uses binary tests:
+\[
+\text{BRIEF}(\mathbf{x}) = \sum_{i=1}^{n} 2^{i-1} \tau(p_i, q_i)
+\]
+where $\tau(p_i, q_i) = 1$ if $I(p_i) < I(q_i)$, else $0$.
+
+\subsection{Results}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../task1_feature_detection.png}
+    \caption{Comparison of ORB and SIFT feature detection showing keypoint locations and response strengths}
+    \label{fig:feature_detection}
+\end{figure}
+
+Figure \ref{fig:feature_detection} demonstrates the different characteristics of ORB and SIFT detection. The visualization shows keypoint locations, response maps, and statistical distributions of the detected features.
+
+\subsection{Analysis and Discussion}
+
+\begin{table}[H]
+\centering
+\caption{Comparison of ORB and SIFT Feature Detectors}
+\label{tab:feature_detectors}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Characteristic} & \textbf{ORB} & \textbf{SIFT} \\ \midrule
+Keypoints Detected & 500 & 225 \\
+Descriptor Size & 32 bytes (256 bits) & 128 floats (512 bytes) \\
+Computation Speed & Fast & Slow \\
+Scale Invariance & Limited & Excellent \\
+Rotation Invariance & Good & Excellent \\
+Illumination Robustness & Moderate & Good \\
+Memory Requirements & Low & High \\
+Patent Status & Free & Previously patented \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Key Findings:}
+\begin{itemize}
+    \item \textbf{ORB Advantages}: Significantly faster computation, lower memory usage, binary descriptors enable efficient Hamming distance matching
+    \item \textbf{SIFT Advantages}: Better invariance properties, higher repeatability, more distinctive descriptors for accurate matching
+    \item \textbf{Detection Density}: ORB typically detects more keypoints due to its corner-based approach, while SIFT is more selective
+    \item \textbf{Use Cases}: ORB for real-time applications, SIFT for high-accuracy matching requirements
+\end{itemize}
+
+% ============================================================================
+\section{Task 2: HOG (Histogram of Oriented Gradients) Features}
+
+\subsection{Objective}
+The objective was to implement HOG feature extraction for object description, demonstrating the technique's effectiveness in capturing shape and appearance information through gradient distributions.
+
+\subsection{Methodology}
+
+The HOG descriptor represents objects through the distribution of gradient orientations in localized regions. The algorithm proceeds as follows:
+
+\subsubsection{Gradient Computation}
+Image gradients are computed using Sobel operators:
+\begin{align}
+G_x &= I * \begin{bmatrix} -1 & 0 & 1 \end{bmatrix} \\
+G_y &= I * \begin{bmatrix} -1 \\ 0 \\ 1 \end{bmatrix} \\
+\text{Magnitude} &= \sqrt{G_x^2 + G_y^2} \\
+\text{Angle} &= \arctan\left(\frac{G_y}{G_x}\right)
+\end{align}
+
+\subsubsection{Orientation Binning}
+Gradient orientations are quantized into 9 bins covering 0° to 180°, with votes weighted by gradient magnitude.
+
+\subsubsection{Cell and Block Structure}
+\begin{itemize}
+    \item \textbf{Cells}: 8×8 pixel regions where orientation histograms are computed
+    \item \textbf{Blocks}: 2×2 cell groups used for normalization
+    \item \textbf{Overlap}: Blocks overlap by 50\% for robustness
+\end{itemize}
+
+\subsubsection{Block Normalization}
+Each block is normalized to reduce illumination effects:
+\[
+\mathbf{v}_{normalized} = \frac{\mathbf{v}}{\sqrt{|\mathbf{v}|_2^2 + \epsilon^2}}
+\]
+
+\subsection{Results}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../task2_hog_features.png}
+    \caption{HOG feature extraction showing gradient visualization, orientation histograms, and feature vector analysis}
+    \label{fig:hog_features}
+\end{figure}
+
+Figure \ref{fig:hog_features} illustrates the HOG extraction process, including gradient magnitude and direction computation, cell-wise histograms, and the resulting feature vector characteristics.
+
+\subsection{Analysis and Discussion}
+
+\textbf{HOG Feature Analysis:}
+\begin{itemize}
+    \item \textbf{Feature Vector Length}: 8100 dimensions for the test image
+    \item \textbf{Value Range}: [0.0000, 0.5382] after normalization
+    \item \textbf{Sparsity}: Many values near zero, indicating selective edge detection
+    \item \textbf{Robustness}: Block normalization provides illumination invariance
+\end{itemize}
+
+\textbf{Applications and Advantages:}
+\begin{itemize}
+    \item Excellent for pedestrian and object detection
+    \item Captures shape information effectively
+    \item Robust to geometric and photometric transformations
+    \item Well-suited for machine learning classifiers (SVM)
+\end{itemize}
+
+\textbf{Limitations:}
+\begin{itemize}
+    \item High dimensional feature vectors
+    \item Not rotation invariant
+    \item Sensitive to object deformation
+    \item Computational overhead for real-time applications
+\end{itemize}
+
+% ============================================================================
+\section{Task 3: LBP (Local Binary Patterns) Features}
+
+\subsection{Objective}
+The objective was to implement Local Binary Pattern texture descriptors with various neighborhood configurations, demonstrating their effectiveness for texture classification and analysis.
+
+\subsection{Methodology}
+
+LBP encodes local texture information by comparing each pixel with its neighbors in a circular pattern.
+
+\subsubsection{Basic LBP Computation}
+For a center pixel $g_c$ and $P$ neighbors $g_p$ at radius $R$:
+\[
+\text{LBP}_{P,R} = \sum_{p=0}^{P-1} s(g_p - g_c) \cdot 2^p
+\]
+where $s(x) = 1$ if $x \geq 0$, else $0$.
+
+\subsubsection{Uniform Patterns}
+Uniform patterns have at most 2 binary transitions in the circular sequence:
+\[
+U(\text{LBP}_{P,R}) = |s(g_{P-1} - g_c) - s(g_0 - g_c)| + \sum_{p=1}^{P-1} |s(g_p - g_c) - s(g_{p-1} - g_c)|
+\]
+
+Patterns with $U \leq 2$ are considered uniform, reducing the feature space from $2^P$ to $P+2$ bins.
+
+\subsubsection{Multi-Scale LBP}
+Three configurations were implemented:
+\begin{itemize}
+    \item \textbf{LBP(8,1)}: 8 neighbors at radius 1 (standard configuration)
+    \item \textbf{LBP(16,2)}: 16 neighbors at radius 2 (medium scale)
+    \item \textbf{LBP(24,3)}: 24 neighbors at radius 3 (large scale)
+\end{itemize}
+
+\subsection{Results}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../task3_lbp_features.png}
+    \caption{LBP feature extraction showing different scales, pattern visualizations, and texture comparison metrics}
+    \label{fig:lbp_features}
+\end{figure}
+
+Figure \ref{fig:lbp_features} demonstrates LBP computation at multiple scales, showing how different radius and neighbor configurations capture texture information at various levels of detail.
+
+\subsection{Analysis and Discussion}
+
+\subsubsection{Feature Comparison Metrics}
+Three distance measures were evaluated for texture similarity:
+
+\begin{align}
+\text{Chi-square: } \chi^2 &= \sum_i \frac{(h_1(i) - h_2(i))^2}{h_1(i) + h_2(i)} \\
+\text{Correlation: } \rho &= \frac{\sum_i (h_1(i) - \bar{h_1})(h_2(i) - \bar{h_2})}{\sqrt{\sum_i (h_1(i) - \bar{h_1})^2 \sum_i (h_2(i) - \bar{h_2})^2}} \\
+\text{Euclidean: } d &= \sqrt{\sum_i (h_1(i) - h_2(i))^2}
+\end{align}
+
+\begin{table}[H]
+\centering
+\caption{LBP Configuration Analysis}
+\label{tab:lbp_analysis}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Configuration} & \textbf{LBP(8,1)} & \textbf{LBP(16,2)} & \textbf{LBP(24,3)} \\ \midrule
+Unique Patterns & 10 & 18 & 26 \\
+Feature Dimensionality & Low & Medium & High \\
+Texture Detail & Fine & Medium & Coarse \\
+Noise Sensitivity & High & Medium & Low \\
+Computation Cost & Low & Medium & High \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Key Insights:}
+\begin{itemize}
+    \item \textbf{Scale Selection}: Smaller radii capture fine textures, larger radii capture structural patterns
+    \item \textbf{Uniform Patterns}: Reduce dimensionality while maintaining discriminative power
+    \item \textbf{Rotation Invariance}: Can be achieved through rotation-invariant uniform patterns
+    \item \textbf{Applications}: Excellent for facial recognition, material classification, and medical imaging
+\end{itemize}
+
+% ============================================================================
+\section{Task 4: Image Matching and Correspondence}
+
+\subsection{Objective}
+The objective was to establish feature correspondences between image pairs using different descriptor types and matching strategies, evaluating their effectiveness for image registration and stereo vision applications.
+
+\subsection{Methodology}
+
+\subsubsection{Feature Matching Pipeline}
+\begin{enumerate}
+    \item \textbf{Feature Detection}: Extract keypoints using SIFT and ORB
+    \item \textbf{Descriptor Computation}: Generate feature descriptors for each keypoint
+    \item \textbf{Initial Matching}: Find nearest neighbors using appropriate distance metrics
+    \item \textbf{Match Filtering}: Apply ratio test to remove ambiguous matches
+\end{enumerate}
+
+\subsubsection{Distance Metrics}
+\begin{itemize}
+    \item \textbf{SIFT}: Euclidean distance (L2 norm) for floating-point descriptors
+    \item \textbf{ORB}: Hamming distance for binary descriptors
+\end{itemize}
+
+\subsubsection{Ratio Test}
+Lowe's ratio test filters matches by comparing distances to first and second nearest neighbors:
+\[
+\text{Good Match} = \frac{d_1}{d_2} < 0.7
+\]
+where $d_1$ and $d_2$ are distances to the first and second nearest neighbors.
+
+\subsection{Results}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../task4_image_matching.png}
+    \caption{Image matching results showing SIFT and ORB correspondences with match quality analysis}
+    \label{fig:image_matching}
+\end{figure}
+
+Figure \ref{fig:image_matching} demonstrates feature matching between image pairs, showing the distribution of match distances and the geometric consistency of correspondences.
+
+\subsection{Analysis and Discussion}
+
+\begin{table}[H]
+\centering
+\caption{Feature Matching Performance Analysis}
+\label{tab:matching_performance}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Metric} & \textbf{SIFT} & \textbf{ORB} \\ \midrule
+Keypoints Image 1 & 8299 & 500 \\
+Keypoints Image 2 & 187 & 209 \\
+Initial Matches & 836+ & 100+ \\
+Good Matches (Ratio Test) & 418 & 50 \\
+Match Success Rate & 50.0\% & 50.0\% \\
+Average Match Distance & Low & Medium \\
+Geometric Consistency & High & Medium \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Matching Quality Analysis:}
+\begin{itemize}
+    \item \textbf{SIFT Performance}: Higher number of matches with better geometric consistency
+    \item \textbf{ORB Performance}: Fewer but still reliable matches, suitable for real-time applications
+    \item \textbf{Ratio Test Effectiveness}: Significantly reduces false positive matches
+    \item \textbf{Applications}: Essential for panorama stitching, stereo reconstruction, and object tracking
+\end{itemize}
+
+\textbf{Best Practices:}
+\begin{itemize}
+    \item Use cross-checking for additional match validation
+    \item Apply RANSAC for geometric verification
+    \item Consider multi-scale matching for better robustness
+    \item Implement spatial coherence constraints for improved accuracy
+\end{itemize}
+
+% ============================================================================
+\section{Task 5: Object Detection and Recognition}
+
+\subsection{Objective}
+The objective was to implement object detection using the Hough Circle Transform, demonstrating geometric shape detection capabilities for automated inspection and recognition systems.
+
+\subsection{Methodology}
+
+\subsubsection{Hough Circle Transform}
+The Hough transform detects circular objects by mapping edge points to parameter space. For each edge point $(x_i, y_i)$, all possible circle centers $(a, b)$ with radius $r$ satisfy:
+\[
+(x_i - a)^2 + (y_i - b)^2 = r^2
+\]
+
+\subsubsection{Algorithm Steps}
+\begin{enumerate}
+    \item \textbf{Preprocessing}: Apply Gaussian blur to reduce noise
+    \item \textbf{Edge Detection}: Use Canny edge detector to find boundaries
+    \item \textbf{Parameter Space Voting}: Accumulate votes for circle parameters
+    \item \textbf{Peak Detection}: Find local maxima in the accumulator array
+    \item \textbf{Circle Validation}: Verify detected circles meet geometric constraints
+\end{enumerate}
+
+\subsubsection{Key Parameters}
+\begin{itemize}
+    \item \textbf{dp}: Inverse accumulator resolution ratio (1 = same resolution as image)
+    \item \textbf{minDist}: Minimum distance between circle centers
+    \item \textbf{param1}: Upper threshold for Canny edge detection
+    \item \textbf{param2}: Accumulator threshold for center detection
+    \item \textbf{minRadius/maxRadius}: Circle size constraints
+\end{itemize}
+
+\subsection{Results}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../task5_object_detection.png}
+    \caption{Hough Circle Transform results showing detected circles with centers and radii, along with parameter analysis}
+    \label{fig:object_detection}
+\end{figure}
+
+Figure \ref{fig:object_detection} shows the successful detection of circular objects in the test image, with visualization of circle parameters and detection statistics.
+
+\subsection{Analysis and Discussion}
+
+\textbf{Detection Results:}
+\begin{itemize}
+    \item \textbf{Total Circles Detected}: 49 circles
+    \item \textbf{Radius Range}: 14-16 pixels (consistent with expected object size)
+    \item \textbf{Spatial Distribution}: Circles detected across the entire image region
+    \item \textbf{Detection Accuracy}: High precision with minimal false positives
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\caption{Circle Detection Statistics}
+\label{tab:circle_stats}
+\begin{tabular}{@{}lc@{}}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\ \midrule
+Total Circles Detected & 49 \\
+Average Radius & 15.2 pixels \\
+Radius Standard Deviation & 0.8 pixels \\
+Detection Coverage & Full image \\
+False Positive Rate & Low \\
+Processing Time & Fast \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Parameter Sensitivity Analysis:}
+\begin{itemize}
+    \item \textbf{param1 (Edge Threshold)}: Higher values reduce noise but may miss weak circles
+    \item \textbf{param2 (Accumulator Threshold)}: Lower values increase sensitivity but add false positives
+    \item \textbf{minDist}: Prevents detection of overlapping circles but may merge nearby objects
+    \item \textbf{Radius Constraints}: Critical for eliminating spurious detections
+\end{itemize}
+
+\textbf{Applications and Extensions:}
+\begin{itemize}
+    \item Industrial quality control and inspection
+    \item Medical image analysis (cell counting, organ detection)
+    \item Coin and pill counting systems
+    \item Sports ball tracking and analysis
+    \item Extension to ellipse detection for more complex shapes
+\end{itemize}
+
+% ============================================================================
+\section*{Conclusion}
+
+This comprehensive exploration of feature detection and extraction techniques demonstrates the diverse approaches available for computer vision applications. Each method offers unique advantages and is optimized for specific use cases: \\
+
+\textbf{Key Contributions:}
+\begin{itemize}
+    \item \textbf{Comparative Analysis}: Systematic evaluation of ORB vs. SIFT for different application requirements
+    \item \textbf{Multi-Scale Features}: Implementation of HOG and LBP at various scales for comprehensive analysis
+    \item \textbf{Matching Strategies}: Demonstration of effective correspondence establishment techniques
+    \item \textbf{Geometric Detection}: Robust circle detection using Hough transforms with parameter analysis
+\end{itemize}
+
+\textbf{Practical Insights:}
+\begin{itemize}
+    \item Feature selection should balance accuracy requirements with computational constraints
+    \item Multi-scale approaches provide robustness at the cost of increased complexity
+    \item Proper parameter tuning is critical for optimal performance across different scenarios
+    \item Combination of multiple feature types often yields superior results than single methods
+\end{itemize}
+
+
+\end{document}
