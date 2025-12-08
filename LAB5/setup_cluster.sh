@@ -76,14 +76,19 @@ pip install --upgrade pip -q
 
 # Install PyTorch with CUDA support
 echo ""
-echo "🔥 Installing PyTorch with CUDA 12.1 support..."
+echo "🔥 Installing PyTorch with CUDA 11.8 support..."
 echo "   This may take a few minutes..."
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
 if [ $? -ne 0 ]; then
-    echo "⚠️  Warning: Failed to install PyTorch with CUDA 12.1"
-    echo "   Trying CPU version as fallback..."
-    pip install torch torchvision
+    echo "⚠️  Warning: Failed to install PyTorch with CUDA 11.8"
+    echo "   Trying CUDA 12.1 as fallback..."
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+    if [ $? -ne 0 ]; then
+        echo "⚠️  Warning: Failed to install PyTorch with CUDA"
+        echo "   Installing CPU version as last resort..."
+        pip install torch torchvision torchaudio
+    fi
 fi
 
 # Install other dependencies

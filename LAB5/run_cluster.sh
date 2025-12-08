@@ -105,19 +105,30 @@ echo "==========================================================================
 # ============================================================================
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Setting up environment..."
 
-# Load CUDA modules (try multiple versions)
-module load cuda/12.4 2>/dev/null || \
-module load cuda/12.1 2>/dev/null || \
-module load cuda/11.8 2>/dev/null || \
-echo "[WARNING] No CUDA module loaded, using system CUDA"
+# Set CUDA environment variables
+export CUDA_HOME=/usr/local/cuda
+export PATH=$CUDA_HOME/bin:$PATH
+export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 
-module load cudnn/8.9 2>/dev/null || \
-module load cudnn 2>/dev/null || \
-echo "[WARNING] No cuDNN module loaded, using system cuDNN"
+# Try to load modules if available (nash has module system issues in SLURM)
+if command -v module &> /dev/null; then
+    # Load CUDA modules (try multiple versions)
+    module load cuda/12.4 2>/dev/null || \
+    module load cuda/12.1 2>/dev/null || \
+    module load cuda/11.8 2>/dev/null || \
+    echo "[INFO] No CUDA module loaded, using system CUDA"
 
-# Display loaded modules
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Loaded modules:"
-module list 2>&1
+    module load cudnn/8.9 2>/dev/null || \
+    module load cudnn 2>/dev/null || \
+    echo "[INFO] No cuDNN module loaded, using system cuDNN"
+
+    # Display loaded modules
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Loaded modules:"
+    module list 2>&1
+else
+    echo "[INFO] Module system not available, using system CUDA libraries"
+    echo "[INFO] CUDA_HOME: $CUDA_HOME"
+fi
 
 # Display GPU information
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] GPU Information:"
@@ -136,8 +147,9 @@ fi
 
 # Set environment variables
 export OMP_NUM_THREADS=CPUS_PLACEHOLDER
-export CUDA_VISIBLE_DEVICES=$SLURM_GPUS
+export CUDA_VISIBLE_DEVICES=0  # Use first GPU
 export PYTHONUNBUFFERED=1
+export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
 
 # Display Python and PyTorch versions
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Python version:"
