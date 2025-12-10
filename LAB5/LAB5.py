@@ -4,17 +4,23 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision
 from torchvision import transforms, datasets
-# Step 2: Prepare the Data
-transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.5,), (0.5,))
-])
 
-train_data = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
-test_data = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+# Step 2: Prepare the Data
+transform = transforms.Compose(
+    [transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))]
+)
+
+train_data = datasets.MNIST(
+    root="./data", train=True, download=True, transform=transform
+)
+test_data = datasets.MNIST(
+    root="./data", train=False, download=True, transform=transform
+)
 
 train_loader = torch.utils.data.DataLoader(train_data, batch_size=64, shuffle=True)
 test_loader = torch.utils.data.DataLoader(test_data, batch_size=64, shuffle=False)
+
+
 # Step 3: Create the CNN Model
 class SimpleCNN(nn.Module):
     def __init__(self):
@@ -33,6 +39,8 @@ class SimpleCNN(nn.Module):
         x = nn.functional.relu(self.fc1(x))
         x = self.fc2(x)
         return x
+
+
 # Step 4: Instantiate the Model and Define Loss Function & Optimizer
 model = SimpleCNN()
 criterion = nn.CrossEntropyLoss()
@@ -53,9 +61,11 @@ for epoch in range(num_epochs):
 
         running_loss += loss.item()
         if i % 100 == 99:
-            print(f'Epoch [{epoch + 1}/{num_epochs}], '
-                  f'Step [{i + 1}/{len(train_loader)}], '
-                  f'Loss: {running_loss / 100:.4f}')
+            print(
+                f"Epoch [{epoch + 1}/{num_epochs}], "
+                f"Step [{i + 1}/{len(train_loader)}], "
+                f"Loss: {running_loss / 100:.4f}"
+            )
             running_loss = 0.0
 # Step 6: Testing the Model
 correct = 0
@@ -68,4 +78,4 @@ with torch.no_grad():
         total += labels.size(0)
         correct += (predicted == labels).sum().item()
 
-print(f'Accuracy on the test set: {(100 * correct / total):.2f}%')
+print(f"Accuracy on the test set: {(100 * correct / total):.2f}%")
