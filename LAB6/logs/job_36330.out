@@ -1,0 +1,462 @@
+==========================================
+Job ID: 36330
+Job Name: LAB6_object_detection
+Node: ampere
+Started at: Tue Dec 23 15:47:25 CET 2025
+==========================================
+
+GPU Information:
+Tue Dec 23 15:47:25 2025       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 580.65.06              Driver Version: 580.65.06      CUDA Version: 13.0     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA A40                     On  |   00000000:3B:00.0 Off |                    0 |
+|  0%   70C    P0            295W /  300W |   36491MiB /  46068MiB |    100%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA A40                     On  |   00000000:AF:00.0 Off |                    0 |
+|  0%   68C    P0            289W /  300W |   44625MiB /  46068MiB |    100%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   2  NVIDIA A40                     On  |   00000000:D8:00.0 Off |                    0 |
+|  0%   24C    P8             21W /  300W |       0MiB /  46068MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A          658893      C   python                                36482MiB |
+|    1   N/A  N/A          664684      C   python                                44616MiB |
++-----------------------------------------------------------------------------------------+
+
+Activating virtual environment...
+✓ Virtual environment activated: .Lab6venv
+
+Python version:
+Python 3.12.3
+
+PyTorch configuration:
+PyTorch version: 2.9.1+cu128
+CUDA available: True
+CUDA version: 12.8
+Number of GPUs: 1
+
+Starting training...
+============================================================
+LAB6: Object Detection Using Deep Learning
+Complete Implementation of All Tasks
+============================================================
+
+✓ Output directories created:
+  task1: outputs/task1_hyperparameters
+  task2: outputs/task2_transfer_learning
+  task3: outputs/task3_augmentation
+  task4: outputs/task4_evaluation
+  visualizations: outputs/visualizations
+
+
+============================================================
+DEVICE CONFIGURATION
+============================================================
+CUDA Available: True
+CUDA Version: 12.8
+cuDNN Version: 91002
+Number of GPUs: 1
+
+GPU 0: NVIDIA A40
+  Memory Allocated: 0.00 GB
+  Memory Cached: 0.00 GB
+  Total Memory: 44.42 GB
+
+✓ Using GPU: NVIDIA A40
+✓ cuDNN auto-tuner enabled
+============================================================
+
+
+============================================================
+RUNNING ALL TASKS
+============================================================
+
+============================================================
+TASK 1: HYPERPARAMETER EXPLORATION
+============================================================
+
+--- Testing config1_baseline ---
+LR: 0.0001, Batch Size: 1, Epochs: 10
+Loaded 94 images from data/images
+✓ Model moved to cuda:0
+Epoch [1/10] Average Loss: 0.3347
+Epoch [2/10] Average Loss: 0.2386
+Epoch [3/10] Average Loss: 0.2157
+Epoch [4/10] Average Loss: 0.1977
+Epoch [5/10] Average Loss: 0.1568
+Epoch [6/10] Average Loss: 0.1351
+Epoch [7/10] Average Loss: 0.1228
+Epoch [8/10] Average Loss: 0.1062
+Epoch [9/10] Average Loss: 0.0992
+Epoch [10/10] Average Loss: 0.0906
+Training time: 380.74s
+✓ Checkpoint saved: outputs/task1_hyperparameters/checkpoint_config1_baseline.pth
+
+--- Testing config2_high_lr ---
+LR: 0.001, Batch Size: 1, Epochs: 10
+Loaded 94 images from data/images
+✓ Model moved to cuda:0
+Epoch [1/10] Average Loss: 1.4311
+Epoch [2/10] Average Loss: 0.7603
+Epoch [3/10] Average Loss: 0.7110
+Epoch [4/10] Average Loss: 0.4544
+Epoch [5/10] Average Loss: 0.3573
+Epoch [6/10] Average Loss: 0.3602
+Epoch [7/10] Average Loss: 0.2812
+Epoch [8/10] Average Loss: 0.2502
+Epoch [9/10] Average Loss: 0.2533
+Epoch [10/10] Average Loss: 2379.1439
+Training time: 314.92s
+✓ Checkpoint saved: outputs/task1_hyperparameters/checkpoint_config2_high_lr.pth
+
+--- Testing config3_low_lr ---
+LR: 1e-05, Batch Size: 1, Epochs: 10
+Loaded 94 images from data/images
+✓ Model moved to cuda:0
+Epoch [1/10] Average Loss: 0.4678
+Epoch [2/10] Average Loss: 0.2438
+Epoch [3/10] Average Loss: 0.2060
+Epoch [4/10] Average Loss: 0.1760
+Epoch [5/10] Average Loss: 0.1565
+Epoch [6/10] Average Loss: 0.1368
+Epoch [7/10] Average Loss: 0.1259
+Epoch [8/10] Average Loss: 0.1164
+Epoch [9/10] Average Loss: 0.1035
+Epoch [10/10] Average Loss: 0.0927
+Training time: 313.74s
+✓ Checkpoint saved: outputs/task1_hyperparameters/checkpoint_config3_low_lr.pth
+
+--- Testing config4_batch2 ---
+LR: 0.0001, Batch Size: 2, Epochs: 8
+Loaded 94 images from data/images
+✓ Model moved to cuda:0
+Epoch [1/8] Average Loss: 0.3562
+Epoch [2/8] Average Loss: 0.2079
+Epoch [3/8] Average Loss: 0.2043
+Epoch [4/8] Average Loss: 0.1881
+Epoch [5/8] Average Loss: 0.1408
+Epoch [6/8] Average Loss: 0.1160
+Epoch [7/8] Average Loss: 0.1111
+Epoch [8/8] Average Loss: 0.1237
+Training time: 257.61s
+✓ Checkpoint saved: outputs/task1_hyperparameters/checkpoint_config4_batch2.pth
+
+--- Testing config5_batch4 ---
+LR: 0.0001, Batch Size: 4, Epochs: 8
+Loaded 94 images from data/images
+✓ Model moved to cuda:0
+Epoch [1/8] Average Loss: 0.4510
+Epoch [2/8] Average Loss: 0.2327
+Epoch [3/8] Average Loss: 0.1904
+Epoch [4/8] Average Loss: 0.1764
+Epoch [5/8] Average Loss: 0.1561
+Epoch [6/8] Average Loss: 0.1331
+Epoch [7/8] Average Loss: 0.1205
+Epoch [8/8] Average Loss: 0.0972
+Training time: 254.65s
+✓ Checkpoint saved: outputs/task1_hyperparameters/checkpoint_config5_batch4.pth
+
+--- Testing config6_more_epochs ---
+LR: 0.0001, Batch Size: 1, Epochs: 15
+Loaded 94 images from data/images
+✓ Model moved to cuda:0
+Epoch [1/15] Average Loss: 0.4028
+Epoch [2/15] Average Loss: 0.2195
+Epoch [3/15] Average Loss: 0.1830
+Epoch [4/15] Average Loss: 0.2043
+Epoch [5/15] Average Loss: 0.1612
+Epoch [6/15] Average Loss: 0.1392
+Epoch [7/15] Average Loss: 0.1296
+Epoch [8/15] Average Loss: 0.2034
+Epoch [9/15] Average Loss: 0.1340
+Epoch [10/15] Average Loss: 0.1211
+Epoch [11/15] Average Loss: 0.0896
+Epoch [12/15] Average Loss: 0.0746
+Epoch [13/15] Average Loss: 0.0717
+Epoch [14/15] Average Loss: 0.0805
+Epoch [15/15] Average Loss: 0.0763
+Training time: 470.90s
+✓ Checkpoint saved: outputs/task1_hyperparameters/checkpoint_config6_more_epochs.pth
+
+✓ Results saved: outputs/task1_hyperparameters/task1_results.json
+
+--- TASK 1 SUMMARY ---
+config1_baseline: Final Loss = 0.0906, Time = 380.74s
+config2_high_lr: Final Loss = 2379.1439, Time = 314.92s
+config3_low_lr: Final Loss = 0.0927, Time = 313.74s
+config4_batch2: Final Loss = 0.1237, Time = 257.61s
+config5_batch4: Final Loss = 0.0972, Time = 254.65s
+config6_more_epochs: Final Loss = 0.0763, Time = 470.90s
+
+============================================================
+TASK 2: ARCHITECTURAL ADAPTATION AND TRANSFER LEARNING
+============================================================
+
+--- Config 1: No Freezing (Baseline) ---
+Loaded 94 images from data/images
+✓ Model moved to cuda:0
+Trainable parameters: 41,076,761 / 41,299,161
+Epoch [1/15] Average Loss: 0.3558
+Epoch [2/15] Average Loss: 0.2185
+Epoch [3/15] Average Loss: 0.1956
+Epoch [4/15] Average Loss: 0.1662
+Epoch [5/15] Average Loss: 0.1572
+Epoch [6/15] Average Loss: 0.1620
+Epoch [7/15] Average Loss: 0.1208
+Epoch [8/15] Average Loss: 0.1007
+Epoch [9/15] Average Loss: 0.0961
+Epoch [10/15] Average Loss: 0.0970
+Epoch [11/15] Average Loss: 0.0927
+Epoch [12/15] Average Loss: 0.0802
+Epoch [13/15] Average Loss: 0.0771
+Epoch [14/15] Average Loss: 0.0629
+Epoch [15/15] Average Loss: 0.0601
+✓ Model saved: outputs/task2_transfer_learning/model_no_freeze.pth
+
+--- Config 2: Freeze Backbone ---
+Loaded 94 images from data/images
+✓ Model moved to cuda:0
+Freezing backbone parameters...
+Trainable parameters: 14,499,865 / 41,299,161
+Epoch [1/15] Average Loss: 0.4533
+Epoch [2/15] Average Loss: 0.2865
+Epoch [3/15] Average Loss: 0.2517
+Epoch [4/15] Average Loss: 0.2393
+Epoch [5/15] Average Loss: 0.2218
+Epoch [6/15] Average Loss: 0.2124
+Epoch [7/15] Average Loss: 0.1997
+Epoch [8/15] Average Loss: 0.1842
+Epoch [9/15] Average Loss: 0.1892
+Epoch [10/15] Average Loss: 0.1752
+Epoch [11/15] Average Loss: 0.1701
+Epoch [12/15] Average Loss: 0.1580
+Epoch [13/15] Average Loss: 0.1546
+Epoch [14/15] Average Loss: 0.1473
+Epoch [15/15] Average Loss: 0.1435
+✓ Model saved: outputs/task2_transfer_learning/model_freeze_backbone.pth
+
+--- Config 3: Gradual Unfreezing (Unfreeze Layer4) ---
+Loaded 94 images from data/images
+✓ Model moved to cuda:0
+Freezing backbone parameters...
+Unfreezing layer4 for gradual unfreezing...
+Trainable parameters: 29,442,073 / 41,299,161
+Epoch [1/15] Average Loss: 0.3467
+Epoch [2/15] Average Loss: 0.2309
+Epoch [3/15] Average Loss: 0.2040
+Epoch [4/15] Average Loss: 0.1798
+Epoch [5/15] Average Loss: 0.1690
+Epoch [6/15] Average Loss: 0.1483
+Epoch [7/15] Average Loss: 0.1326
+Epoch [8/15] Average Loss: 0.1285
+Epoch [9/15] Average Loss: 0.1171
+Epoch [10/15] Average Loss: 0.1100
+Epoch [11/15] Average Loss: 0.1046
+Epoch [12/15] Average Loss: 0.0975
+Epoch [13/15] Average Loss: 0.0934
+Epoch [14/15] Average Loss: 0.0984
+Epoch [15/15] Average Loss: 0.0862
+✓ Model saved: outputs/task2_transfer_learning/model_gradual_unfreeze.pth
+
+--- Config 4: MobileNetV3 Backbone ---
+Loaded 94 images from data/images
+✓ Model moved to cuda:0
+Trainable parameters: 18,871,333 / 18,930,229
+Epoch [1/15] Average Loss: 0.2052
+Epoch [2/15] Average Loss: 0.2341
+Epoch [3/15] Average Loss: 0.3183
+Epoch [4/15] Average Loss: 0.3335
+Epoch [5/15] Average Loss: 0.4110
+Epoch [6/15] Average Loss: 0.4433
+Epoch [7/15] Average Loss: 0.4743
+Epoch [8/15] Average Loss: 0.5573
+Epoch [9/15] Average Loss: 0.6208
+Epoch [10/15] Average Loss: 0.5533
+Epoch [11/15] Average Loss: 0.6727
+Epoch [12/15] Average Loss: 0.5836
+Epoch [13/15] Average Loss: 0.7247
+Epoch [14/15] Average Loss: 0.5835
+Epoch [15/15] Average Loss: 0.5308
+✓ Model saved: outputs/task2_transfer_learning/model_mobilenet.pth
+
+✓ Results saved: outputs/task2_transfer_learning/task2_results.json
+
+--- TASK 2 SUMMARY ---
+no_freeze: Final Loss = 0.0601, Time = 474.40s
+freeze_backbone: Final Loss = 0.1435, Time = 441.85s
+gradual_unfreeze: Final Loss = 0.0862, Time = 451.29s
+mobilenet: Final Loss = 0.5308, Time = 434.04s
+
+============================================================
+TASK 3: DATA TRANSFORMATION AND AUGMENTATION
+============================================================
+
+--- Config 1: Basic Transform (ToTensor only) ---
+Loaded 94 images from data/images
+✓ Model moved to cuda:0
+Epoch [1/12] Average Loss: 0.3852
+Epoch [2/12] Average Loss: 0.2417
+Epoch [3/12] Average Loss: 0.1841
+Epoch [4/12] Average Loss: 0.1969
+Epoch [5/12] Average Loss: 0.1719
+Epoch [6/12] Average Loss: 0.1347
+Epoch [7/12] Average Loss: 0.1151
+Epoch [8/12] Average Loss: 0.1103
+Epoch [9/12] Average Loss: 0.1121
+Epoch [10/12] Average Loss: 0.1069
+Epoch [11/12] Average Loss: 0.0845
+Epoch [12/12] Average Loss: 0.1065
+✓ Model saved: outputs/task3_augmentation/model_basic_transform.pth
+
+--- Config 2: With Random Horizontal Flip ---
+Loaded 94 images from data/images
+✓ Model moved to cuda:0
+Epoch [1/12] Average Loss: 0.7556
+Epoch [2/12] Average Loss: 0.5123
+Epoch [3/12] Average Loss: 0.5104
+Epoch [4/12] Average Loss: 0.5152
+Epoch [5/12] Average Loss: 0.5003
+Epoch [6/12] Average Loss: 0.5154
+Epoch [7/12] Average Loss: 0.4519
+Epoch [8/12] Average Loss: 0.4137
+Epoch [9/12] Average Loss: 0.4218
+Epoch [10/12] Average Loss: 0.3809
+Epoch [11/12] Average Loss: 0.4151
+Epoch [12/12] Average Loss: 0.4468
+✓ Model saved: outputs/task3_augmentation/model_horizontal_flip.pth
+
+--- Config 3: With Color Jitter ---
+Loaded 94 images from data/images
+✓ Model moved to cuda:0
+Epoch [1/12] Average Loss: 0.3599
+Epoch [2/12] Average Loss: 0.2667
+Epoch [3/12] Average Loss: 0.2367
+Epoch [4/12] Average Loss: 0.2028
+Epoch [5/12] Average Loss: 0.1765
+Epoch [6/12] Average Loss: 0.1519
+Epoch [7/12] Average Loss: 0.1501
+Epoch [8/12] Average Loss: 0.1375
+Epoch [9/12] Average Loss: 0.1418
+Epoch [10/12] Average Loss: 0.1407
+Epoch [11/12] Average Loss: 0.1148
+Epoch [12/12] Average Loss: 0.1028
+✓ Model saved: outputs/task3_augmentation/model_color_jitter.pth
+
+--- Config 4: With ImageNet Normalization ---
+Loaded 94 images from data/images
+✓ Model moved to cuda:0
+Epoch [1/12] Average Loss: 0.7207
+Epoch [2/12] Average Loss: 0.2808
+Epoch [3/12] Average Loss: 0.2649
+Epoch [4/12] Average Loss: 0.2193
+Epoch [5/12] Average Loss: 0.1893
+Epoch [6/12] Average Loss: 0.1549
+Epoch [7/12] Average Loss: 0.1456
+Epoch [8/12] Average Loss: 0.1310
+Epoch [9/12] Average Loss: 0.1154
+Epoch [10/12] Average Loss: 0.1100
+Epoch [11/12] Average Loss: 0.0916
+Epoch [12/12] Average Loss: 0.0849
+✓ Model saved: outputs/task3_augmentation/model_normalized.pth
+
+--- Config 5: Combined Augmentation ---
+Loaded 94 images from data/images
+✓ Model moved to cuda:0
+Epoch [1/12] Average Loss: 0.7275
+Epoch [2/12] Average Loss: 0.5435
+Epoch [3/12] Average Loss: 0.5236
+Epoch [4/12] Average Loss: 0.4574
+Epoch [5/12] Average Loss: 0.5031
+Epoch [6/12] Average Loss: 0.5219
+Epoch [7/12] Average Loss: 0.4891
+Epoch [8/12] Average Loss: 0.4387
+Epoch [9/12] Average Loss: 0.4289
+Epoch [10/12] Average Loss: 0.4469
+Epoch [11/12] Average Loss: 0.4223
+Epoch [12/12] Average Loss: 0.4479
+✓ Model saved: outputs/task3_augmentation/model_combined_augmentation.pth
+
+✓ Results saved: outputs/task3_augmentation/task3_results.json
+
+--- TASK 3 SUMMARY ---
+basic_transform: Final Loss = 0.1065, Time = 378.72s
+horizontal_flip: Final Loss = 0.4468, Time = 387.85s
+color_jitter: Final Loss = 0.1028, Time = 1626.66s
+normalized: Final Loss = 0.0849, Time = 434.82s
+combined_augmentation: Final Loss = 0.4479, Time = 645.84s
+
+============================================================
+TASK 4: EVALUATION AND INFERENCE
+============================================================
+Training new model...
+Loaded 94 images from data/images
+✓ Model moved to cuda:0
+✓ Model saved: outputs/task4_evaluation/model_task4.pth
+Loaded 94 images from data/images
+
+Running inference on: data/images/DJI_20250617134732_0718_V.JPG
+✓ Image tensor moved to cuda:0
+
+Total predictions: 4
+
+--- Confidence Threshold: 0.3 ---
+Detections after confidence filtering: 3
+  IoU threshold 0.3: 3 detections after NMS
+  IoU threshold 0.5: 3 detections after NMS
+  IoU threshold 0.7: 3 detections after NMS
+
+--- Confidence Threshold: 0.5 ---
+Detections after confidence filtering: 2
+  IoU threshold 0.3: 2 detections after NMS
+  IoU threshold 0.5: 2 detections after NMS
+Saved visualization to outputs/visualizations/task4_output_conf0.5_iou0.5.jpg
+  IoU threshold 0.7: 2 detections after NMS
+
+--- Confidence Threshold: 0.7 ---
+Detections after confidence filtering: 2
+  IoU threshold 0.3: 2 detections after NMS
+  IoU threshold 0.5: 2 detections after NMS
+  IoU threshold 0.7: 2 detections after NMS
+
+--- Confidence Threshold: 0.9 ---
+Detections after confidence filtering: 1
+  IoU threshold 0.3: 1 detections after NMS
+  IoU threshold 0.5: 1 detections after NMS
+  IoU threshold 0.7: 1 detections after NMS
+
+--- Comparing NMS Strategies ---
+No NMS: 2 detections
+Saved visualization to outputs/visualizations/task4_no_nms.jpg
+With NMS (IoU=0.5): 2 detections
+Saved visualization to outputs/visualizations/task4_with_nms.jpg
+
+Task 4 completed. Check generated images for results.
+
+============================================================
+ALL TASKS COMPLETED!
+============================================================
+
+============================================================
+FINAL GPU MEMORY STATISTICS
+============================================================
+Memory Allocated: 0.18 GB
+Memory Cached: 2.41 GB
+Max Memory Allocated: 35.82 GB
+============================================================
+
+==========================================
+Job finished at: Tue Dec 23 17:53:56 CET 2025
+==========================================

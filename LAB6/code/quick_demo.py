@@ -17,9 +17,9 @@ def demo_pretrained_detection(image_path="family-and-dog.jpg"):
     Démo 1: Détection d'objets avec un modèle pré-entraîné
     Utilise Faster R-CNN pré-entraîné sur COCO
     """
-    print("="*60)
+    print("=" * 60)
     print("DEMO 1: Détection avec Modèle Pré-entraîné")
-    print("="*60)
+    print("=" * 60)
 
     if not os.path.exists(image_path):
         print(f"ERREUR: Image '{image_path}' non trouvée!")
@@ -73,7 +73,9 @@ def demo_pretrained_detection(image_path="family-and-dog.jpg"):
 
         # Afficher les détections
         print("\n4. Objets détectés:")
-        for i, (box, score, label) in enumerate(zip(final_boxes, final_scores, final_labels)):
+        for i, (box, score, label) in enumerate(
+            zip(final_boxes, final_scores, final_labels)
+        ):
             class_name = classes[label.item()]
             print(f"   [{i+1}] {class_name}: {score.item():.3f} - Box: {box.tolist()}")
 
@@ -114,9 +116,9 @@ def demo_compare_models(image_path="family-and-dog.jpg"):
     """
     Démo 2: Comparaison de différents modèles de détection
     """
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("DEMO 2: Comparaison de Modèles")
-    print("="*60)
+    print("=" * 60)
 
     if not os.path.exists(image_path):
         print(f"ERREUR: Image '{image_path}' non trouvée!")
@@ -139,6 +141,7 @@ def demo_compare_models(image_path="family-and-dog.jpg"):
         model.eval()
 
         import time
+
         start = time.time()
 
         with torch.no_grad():
@@ -153,7 +156,9 @@ def demo_compare_models(image_path="family-and-dog.jpg"):
         results[model_name] = {
             "inference_time": inference_time,
             "num_detections": num_detections,
-            "avg_confidence": predictions["scores"][mask].mean().item() if num_detections > 0 else 0
+            "avg_confidence": (
+                predictions["scores"][mask].mean().item() if num_detections > 0 else 0
+            ),
         }
 
         print(f"Temps d'inférence: {inference_time:.4f}s")
@@ -173,9 +178,9 @@ def demo_nms_comparison(image_path="family-and-dog.jpg"):
     """
     Démo 3: Impact du NMS avec différents seuils IoU
     """
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("DEMO 3: Impact du NMS")
-    print("="*60)
+    print("=" * 60)
 
     if not os.path.exists(image_path):
         print(f"ERREUR: Image '{image_path}' non trouvée!")
@@ -217,7 +222,7 @@ def demo_nms_comparison(image_path="family-and-dog.jpg"):
                     boxes[keep],
                     scores[keep],
                     labels[keep],
-                    f"demo_nms_iou{iou_threshold}.jpg"
+                    f"demo_nms_iou{iou_threshold}.jpg",
                 )
 
 
@@ -235,7 +240,11 @@ def visualize_boxes(image, boxes, scores, labels, output_path):
 
     for box, score, label in zip(boxes, scores, labels):
         x1, y1, x2, y2 = box.tolist()
-        class_name = classes[label.item()] if label.item() < len(classes) else f"Class {label.item()}"
+        class_name = (
+            classes[label.item()]
+            if label.item() < len(classes)
+            else f"Class {label.item()}"
+        )
 
         draw.rectangle([(x1, y1), (x2, y2)], outline="red", width=3)
 
@@ -255,12 +264,14 @@ def demo_custom_inference_pipeline():
     """
     Démo 4: Pipeline complet d'inférence personnalisé
     """
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("DEMO 4: Pipeline d'Inférence Personnalisé")
-    print("="*60)
+    print("=" * 60)
 
     class ObjectDetector:
-        def __init__(self, model_name="fasterrcnn", confidence_threshold=0.5, iou_threshold=0.5):
+        def __init__(
+            self, model_name="fasterrcnn", confidence_threshold=0.5, iou_threshold=0.5
+        ):
             print(f"\nInitialisation du détecteur...")
             print(f"  Modèle: {model_name}")
             print(f"  Seuil de confiance: {confidence_threshold}")
@@ -306,11 +317,13 @@ def demo_custom_inference_pipeline():
             # Formater résultats
             results = []
             for box, score, label in zip(boxes, scores, labels):
-                results.append({
-                    "class": self.classes[label.item()],
-                    "confidence": score.item(),
-                    "bbox": box.tolist()
-                })
+                results.append(
+                    {
+                        "class": self.classes[label.item()],
+                        "confidence": score.item(),
+                        "bbox": box.tolist(),
+                    }
+                )
 
             return results, image
 
@@ -335,7 +348,9 @@ def demo_custom_inference_pipeline():
     # Utiliser le pipeline
     image_path = "family-and-dog.jpg"
     if os.path.exists(image_path):
-        detector = ObjectDetector(model_name="fasterrcnn", confidence_threshold=0.6, iou_threshold=0.5)
+        detector = ObjectDetector(
+            model_name="fasterrcnn", confidence_threshold=0.6, iou_threshold=0.5
+        )
 
         print(f"\nDétection sur: {image_path}")
         results, image = detector.detect(image_path)
@@ -351,10 +366,10 @@ def demo_custom_inference_pipeline():
 
 def main():
     """Menu principal des démos"""
-    print("="*60)
+    print("=" * 60)
     print("SCRIPTS DE DÉMONSTRATION - LAB6")
     print("Tests Rapides Sans Entraînement")
-    print("="*60)
+    print("=" * 60)
 
     print("\nDémos disponibles:")
     print("1. Détection avec modèle pré-entraîné")
@@ -379,9 +394,9 @@ def main():
         demo_compare_models()
         demo_nms_comparison()
         demo_custom_inference_pipeline()
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("TOUTES LES DÉMOS TERMINÉES!")
-        print("="*60)
+        print("=" * 60)
     elif choice == "0":
         print("Au revoir!")
     else:
@@ -390,4 +405,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

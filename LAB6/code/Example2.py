@@ -82,4 +82,6 @@ print(f"Saved labeled image as {output_path}")
 # -------------------------------
 print("\nFinal detections (top 5):")
 for idx in keep[:5]:
-    print(f"Box={boxes[idx].tolist()}  Class={classes[labels[idx]]}  Score={scores[idx]:.2f}")
+    print(
+        f"Box={boxes[idx].tolist()}  Class={classes[labels[idx]]}  Score={scores[idx]:.2f}"
+    )

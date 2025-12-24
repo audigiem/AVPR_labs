@@ -7,6 +7,7 @@ from PIL import Image
 import os
 from tqdm import tqdm
 
+
 # -----------------------------
 # Custom Dataset
 # -----------------------------
@@ -15,7 +16,7 @@ class CustomDataset(torch.utils.data.Dataset):
         self.images_dir = images_dir
         self.labels_dir = labels_dir
         self.transform = transform
-        self.images = [f for f in os.listdir(images_dir) if f.lower().endswith('.jpg')]
+        self.images = [f for f in os.listdir(images_dir) if f.lower().endswith(".jpg")]
         if len(self.images) == 0:
             raise ValueError(f"No images found in {images_dir}")
 
@@ -37,12 +38,12 @@ class CustomDataset(torch.utils.data.Dataset):
         with open(label_path) as f:
             for line in f.readlines():
                 cls, x_center, y_center, w, h = map(float, line.strip().split())
-                x1 = (x_center - w/2) * width
-                y1 = (y_center - h/2) * height
-                x2 = (x_center + w/2) * width
-                y2 = (y_center + h/2) * height
+                x1 = (x_center - w / 2) * width
+                y1 = (y_center - h / 2) * height
+                x2 = (x_center + w / 2) * width
+                y2 = (y_center + h / 2) * height
                 boxes.append([x1, y1, x2, y2])
-                labels.append(int(cls)+1)  # 0 = background
+                labels.append(int(cls) + 1)  # 0 = background
 
         boxes = torch.tensor(boxes, dtype=torch.float32)
         labels = torch.tensor(labels, dtype=torch.int64)
@@ -53,6 +54,7 @@ class CustomDataset(torch.utils.data.Dataset):
 
         return img, target
 
+
 # -----------------------------
 # Dataset and DataLoader
 # -----------------------------
@@ -61,7 +63,9 @@ labels_dir = "data/labels"
 transform = transforms.ToTensor()
 
 dataset = CustomDataset(images_dir, labels_dir, transform=transform)
-loader = DataLoader(dataset, batch_size=2, shuffle=True, collate_fn=lambda x: tuple(zip(*x)))
+loader = DataLoader(
+    dataset, batch_size=2, shuffle=True, collate_fn=lambda x: tuple(zip(*x))
+)
 
 # -----------------------------
 # Load Pretrained Faster R-CNN
@@ -80,7 +84,7 @@ for param in model.backbone.parameters():
     param.requires_grad = False  # freeze backbone
 
 for param in model.roi_heads.parameters():
-    param.requires_grad = True   # only train ROI heads
+    param.requires_grad = True  # only train ROI heads
 
 # -----------------------------
 # 5.2 Optimizer (ROI heads only)
@@ -115,15 +119,20 @@ for name, param in model.backbone.body.layer4.named_parameters():
     param.requires_grad = True
 
 # Define optimizer for backbone + ROI heads with different learning rates
-optimizer = torch.optim.Adam([
-    {'params': model.backbone.parameters(), 'lr': 1e-5},
-    {'params': model.roi_heads.parameters(), 'lr': 1e-4}
-])
+optimizer = torch.optim.Adam(
+    [
+        {"params": model.backbone.parameters(), "lr": 1e-5},
+        {"params": model.roi_heads.parameters(), "lr": 1e-4},
+    ]
+)
 
 # -----------------------------
 # Save model
 # -----------------------------
-torch.save({
-    'model_state_dict': model.state_dict(),
-    'optimizer_state_dict': optimizer.state_dict()
-}, "fasterrcnn_custom_transfer.pth")
+torch.save(
+    {
+        "model_state_dict": model.state_dict(),
+        "optimizer_state_dict": optimizer.state_dict(),
+    },
+    "fasterrcnn_custom_transfer.pth",
+)

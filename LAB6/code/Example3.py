@@ -10,8 +10,9 @@ from PIL import Image
 import os
 from tqdm import tqdm
 
+
 # -----------------------------
-# Step 2: Custom Dataset 
+# Step 2: Custom Dataset
 # -----------------------------
 class CustomDataset(Dataset):
     def __init__(self, images_dir, labels_dir, transform=None):
@@ -19,7 +20,7 @@ class CustomDataset(Dataset):
         self.labels_dir = labels_dir
         self.transform = transform
         # Case-insensitive image extension check
-        self.images = [f for f in os.listdir(images_dir) if f.lower().endswith('.jpg')]
+        self.images = [f for f in os.listdir(images_dir) if f.lower().endswith(".jpg")]
 
         if len(self.images) == 0:
             raise ValueError(f"No images found in {images_dir}")
@@ -32,7 +33,7 @@ class CustomDataset(Dataset):
         img_path = os.path.join(self.images_dir, img_name)
 
         # Correctly get corresponding txt label
-        base_name = os.path.splitext(img_name)[0]   # remove .JPG or .jpg
+        base_name = os.path.splitext(img_name)[0]  # remove .JPG or .jpg
         label_path = os.path.join(self.labels_dir, base_name + ".txt")
 
         # Load image
@@ -45,12 +46,12 @@ class CustomDataset(Dataset):
         with open(label_path) as f:
             for line in f.readlines():
                 cls, x_center, y_center, w, h = map(float, line.strip().split())
-                x1 = (x_center - w/2) * width
-                y1 = (y_center - h/2) * height
-                x2 = (x_center + w/2) * width
-                y2 = (y_center + h/2) * height
+                x1 = (x_center - w / 2) * width
+                y1 = (y_center - h / 2) * height
+                x2 = (x_center + w / 2) * width
+                y2 = (y_center + h / 2) * height
                 boxes.append([x1, y1, x2, y2])
-                labels.append(int(cls)+1)  # 0 = background
+                labels.append(int(cls) + 1)  # 0 = background
 
         boxes = torch.tensor(boxes, dtype=torch.float32)
         labels = torch.tensor(labels, dtype=torch.int64)
@@ -71,8 +72,12 @@ labels_dir = "data/labels"
 transform = transforms.ToTensor()
 
 dataset = CustomDataset(images_dir, labels_dir, transform=transform)
-train_loader = DataLoader(dataset, batch_size=1, shuffle=True, collate_fn=lambda x: tuple(zip(*x)))
-test_loader = DataLoader(dataset, batch_size=1, shuffle=False, collate_fn=lambda x: tuple(zip(*x)))
+train_loader = DataLoader(
+    dataset, batch_size=1, shuffle=True, collate_fn=lambda x: tuple(zip(*x))
+)
+test_loader = DataLoader(
+    dataset, batch_size=1, shuffle=False, collate_fn=lambda x: tuple(zip(*x))
+)
 
 # -----------------------------
 # Step 4: Load Pretrained Faster R-CNN Model
@@ -122,8 +127,11 @@ with torch.no_grad():
 # -----------------------------
 # Step 8: Save Model Checkpoint
 # -----------------------------
-torch.save({
-    'model_state_dict': model.state_dict(),
-    'optimizer_state_dict': optimizer.state_dict(),
-    'epoch': num_epochs
-}, 'fasterrcnn_custom_checkpoint.pth')
+torch.save(
+    {
+        "model_state_dict": model.state_dict(),
+        "optimizer_state_dict": optimizer.state_dict(),
+        "epoch": num_epochs,
+    },
+    "fasterrcnn_custom_checkpoint.pth",
+)

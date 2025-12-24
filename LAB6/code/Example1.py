@@ -18,9 +18,7 @@ model.eval()
 img_path = "family-and-dog.jpg"
 image = Image.open(img_path).convert("RGB")
 
-transform = transforms.Compose([
-    transforms.ToTensor()
-])
+transform = transforms.Compose([transforms.ToTensor()])
 
 img_tensor = transform(image).unsqueeze(0)
 
